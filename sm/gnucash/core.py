@@ -26,6 +26,7 @@ class Book(GcObj):
 		GcObj.__init__(self, fields)
 		self._root = None
 		self._set_account_refs()
+		self._trs_by_num = None
 
 	def _set_account_refs(self):
 		for ac in self.accounts.itervalues():
@@ -83,6 +84,31 @@ class Book(GcObj):
 	@property
 	def commodities(self):
 		return self.fields['commodities']
+
+	
+	@property
+	def trs_by_num(self):
+		if self._trs_by_num == None:
+			self._set_trs_by_num()
+		return self._trs_by_num
+
+	def _set_trs_by_num(self):
+		res = {}
+		for tr in self.transactions.itervalues():
+			num = tr.num
+			if num not in res:
+				res[num] = ()
+			res[num] += (tr,)
+		self._trs_by_num = res
+	
+	def tr_by_num(self, num):
+		trs = self.trs_by_num[num]
+		if len(trs)!=1:
+			raise ValueError("there are multiple transactions, "
+					"%s, with the same number %s" %
+					(trs, num))
+		return trs[0]
+
 
 class Account(GcObj):
 	def __init__(self, fields):
