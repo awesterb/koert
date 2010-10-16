@@ -1,3 +1,5 @@
+from datetime import datetime
+
 class GcStruct(object):
 	def __init__(self, fields):
 		self.fields = fields
@@ -174,7 +176,12 @@ class Account(GcObj):
 class Transaction(GcObj):
 	def __init__(self, fields):
 		GcObj.__init__(self, fields)
-	
+
+	def __repr__(self):
+		return "<tr%s %s %s>" % (self.num if self.num else "", 
+				self.date_posted, 
+				repr(self.description))
+
 	@property
 	def splits(self):
 		return self.fields['splits']
@@ -245,7 +252,10 @@ class Commodity(GcStruct):
 class TimeStamp(GcStruct):
 	def __init__(self, fields):
 		GcStruct.__init__(self, fields)
-	
+
+	def __repr__(self):
+		return datetime.fromtimestamp(self.date).strftime("%Y-%m-%d")
+
 	@property
 	def date(self):
 		return self.fields['date']
