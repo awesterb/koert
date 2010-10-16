@@ -115,13 +115,14 @@ class Book(GcObj):
 class Account(GcObj):
 	def __init__(self, fields):
 		GcObj.__init__(self, fields)
+		self._path = None
 		# the following are set by the Book
 		self._parent = None 
 		self._children = {}
-		self._mutations = []
+		self._mutations = []	
 
 	def __repr__(self):
-		return "<Account %s>" % self.nice_id
+		return "<ac%s>" % self.nice_id
 
 	@property
 	def parent_id(self):
@@ -133,6 +134,16 @@ class Account(GcObj):
 		self._parent = value
 		self.fields['parent'] = value.id
 	parent = property(get_parent, set_parent)
+
+	@property
+	def path(self):
+		if self._path==None:
+			self._path = self._create_path()
+		return self._path
+	def _create_path(self):
+		if self.parent==None:
+			return ""
+		return ":".join((self.parent.path, self.name))
 
 	@property
 	def name(self):
@@ -168,10 +179,7 @@ class Account(GcObj):
 
 	@property
 	def nice_id(self):
-		if self.name:
-			return repr(self.name)
-		return self.id
-	
+		return self.path	
 
 class Transaction(GcObj):
 	def __init__(self, fields):
