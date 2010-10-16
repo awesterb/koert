@@ -12,16 +12,19 @@ class Verifier(object):
 			if fact in facts:
 				continue
 			facts.add(fact)
-			todo.extend(fact.deps)
+			for dep,strong in fact.deps:
+				todo.append(dep)
 		l = list(facts)
 		del todo
 		del facts
-		l = list(sort_by_successors(l, lambda fact: fact.deps))
+		l = list(sort_by_successors(l, 
+			lambda fact: [dep[0] for dep in fact.deps]))
 		l.reverse()
 		verified = set()
 		results = {}
 		for fact in l:
-			if not all([dep in verified for dep in fact.deps]):
+			if not all([(not strong) or dep in verified 
+				for dep,strong in fact.deps]):
 				results[fact] = None
 				continue
 			result = fact.verlet(self)
@@ -81,7 +84,7 @@ class OneBook(Verlet):
 		self.v.book = self.v.gcf.books.values()[0]
 
 
-@fact(descr="each transaction has a unique number", deps=(OneBook,))
+@fact(descr="each transaction has a unique number", deps=((OneBook, True),))
 class TrsHaveNum(Verlet):
 	def get_ok(self):
 		mult_nums = []
@@ -100,18 +103,38 @@ class TrsHaveNum(Verlet):
 		return len(self.issues)==0
 
 
-@fact(descr="each transaction number is a 3-digit decimal", deps=(OneBook,))
+@fact(descr="each transaction number is a 3-digit decimal", 
+		deps=((OneBook,True),))
 class TrNumsAreRemco(Verlet):
 	def get_ok(self):
 		fails = []
+		maxnum = 0
 		for num in self.v.book.trs_by_num.iterkeys():
 			if num==None or num=="":
 				continue
 			if (len(num)==3 and 
 					all([d in "0123456789" for d in num])):
+				inum = int(num)
+				if inum > maxnum:
+					maxnum = inum
 				continue
 			fails.append(num)
+		self.v.max_tr_num = maxnum
 		if len(fails)>0:
 			self.issues.append("the numbers %s are not" % 
 					(tuple(fails),))
+		return len(self.issues)==0
+
+@fact(descr="the transactions numbers are continuous",
+		deps=((TrNumsAreRemco,False), ))
+class TrNumsAreRemcoContinuous(Verlet):
+	def get_ok(self):
+		fails = []
+		for inum in xrange(1,self.v.max_tr_num+1):
+			num = "%03d" % inum
+			if num not in self.v.book.trs_by_num:
+				fails.append(num)
+		if len(fails)>0:
+			self.issues.append("the numbers %s have no transaction"
+					% (tuple(fails),))
 		return len(self.issues)==0
