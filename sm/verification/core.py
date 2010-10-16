@@ -138,3 +138,16 @@ class TrNumsAreRemcoContinuous(Verlet):
 			self.issues.append("the numbers %s have no transaction"
 					% (tuple(fails),))
 		return len(self.issues)==0
+
+@fact(descr="the split accounts are not mutated")
+class AcMutThenNoSplit(Verlet):
+	def get_ok(self):
+		fails = []
+		for ac in self.v.book.accounts.itervalues():
+			if len(ac.children)==0:
+				continue
+			if len(ac.mutations)>0:
+				fails.append(ac)
+		if len(fails)>0:
+			self.issues.append("%s are" % (tuple(fails),))
+		return len(self.issues)==0
