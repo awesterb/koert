@@ -68,11 +68,13 @@ class CharactersSH(SH):
 
 # todo: parse offset; unfortunately, time.strptime does not support 
 #       the %z directive
-time_format = "%Y-%m-%d %H:%M:%S +0200"
+time_format = "%Y-%m-%d %H:%M:%S"
 class TimeSH(CharactersSH):
 	def __init__(self):
 		CharactersSH.__init__(self)
 	def _tweak_result(self, result):
+		if "+" in result:
+			result,offset = result.split("+")
 		return time.mktime(time.strptime(result.strip(), time_format))
 
 class IntSH(CharactersSH):
