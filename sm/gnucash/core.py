@@ -111,6 +111,19 @@ class Book(GcObj):
 					(trs, num))
 		return trs[0]
 
+	def ac_by_path(self, path):
+		bits = path.split(":")
+		ac = self.root
+		for bit in bits:
+			if not bit:
+				continue
+			try:
+				ac = ac.children[bit]
+			except KeyError:
+				raise KeyError("%s has no child named %s" % (
+					ac, bit))
+		return ac
+
 
 class Account(GcObj):
 	def __init__(self, fields):
