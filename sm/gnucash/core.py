@@ -55,10 +55,11 @@ class Book(GcObj):
 
 	def _handle_transaction(self, tr):
 		for sp in tr.splits.itervalues():
-			self._handle_split(sp)
+			self._handle_split(sp, tr)
 
-	def _handle_split(self, sp):
+	def _handle_split(self, sp, tr):
 		sp._account = self.accounts[sp.account_id]
+		sp._transaction = tr
 		sp.account.mutations.append(sp)
 
 	def _handle_root_ac(self, ac):
@@ -233,6 +234,12 @@ class Split(GcObj):
 		GcObj.__init__(self, fields)
 		# set by Book
 		self._account = None
+		self._transaction = None
+
+	def __repr__(self):
+		return "<sp %s %s by tr%s>" % (self.value, 
+				self.account.nice_id, 
+				self.transaction.num)
 
 	@property
 	def account_id(self):
@@ -244,6 +251,10 @@ class Split(GcObj):
 		self._account = value
 		self.fields['account'] = value.id
 	account = property(get_account, set_account)
+
+	@property
+	def transaction(self):
+		return self._transaction
 
 	@property
 	def memo(self):
