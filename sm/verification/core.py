@@ -32,7 +32,6 @@ class Verifier(object):
 				verified.add(fact)
 			results[fact] = result
 		return results
-			
 
 class Fact(object):
 	def __init__(self, verlet, deps=(), descr=None):
@@ -139,7 +138,8 @@ class TrNumsAreRemcoContinuous(Verlet):
 					% (tuple(fails),))
 		return len(self.issues)==0
 
-@fact(descr="the split accounts are not mutated")
+@fact(descr="the split accounts are not mutated",
+		deps=((OneBook,True),))
 class AcMutThenNoSplit(Verlet):
 	def get_ok(self):
 		fails = []
@@ -150,4 +150,29 @@ class AcMutThenNoSplit(Verlet):
 				fails.append(ac)
 		if len(fails)>0:
 			self.issues.append("%s are" % (tuple(fails),))
+		return len(self.issues)==0
+
+@fact(descr="each transaction mutates at least one account",
+		deps=((OneBook,True),))
+class TrMutAc(Verlet):
+	def get_ok(self):
+		fails = []
+		for tr in self.v.book.transactions.itervalues():
+			if len(tr.splits)==0:
+				fails.append(tr)
+		if len(fails)>0:
+			self.issues.append("%s do not" % (tuple(fails),))
+		return len(self.issues)==0
+
+@fact(descr="each split has non-zero value",
+		deps=((OneBook,True),))
+class SpNonZero(Verlet):
+	def get_ok(self):
+		fails = []
+		for tr in self.v.book.transactions.itervalues():
+			for sp in tr.splits.itervalues():
+				if sp.value==0:
+					fails.append(sp)
+		if len(fails)>0:
+			self.issues.append("%s do not" % (tuple(fails),))
 		return len(self.issues)==0
