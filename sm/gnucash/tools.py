@@ -15,3 +15,8 @@ def open_pos_gzipped(filepath):
 		f = open(filepath)
 	return f
 
+def open_gcf(filepath):
+	handler = SaxHandler()
+	f = open_pos_gzipped(filepath)
+	parse(f, handler)
+	return handler.result
