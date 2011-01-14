@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 
 class GcStruct(object):
 	def __init__(self, fields):
@@ -198,6 +199,7 @@ class Account(GcObj):
 class Transaction(GcObj):
 	def __init__(self, fields):
 		GcObj.__init__(self, fields)
+		self._softrefs = Softref.from_text(self.description)
 
 	def __repr__(self):
 		return "<tr%s %s %s>" % (self.num if self.num else "", 
@@ -295,3 +297,38 @@ class TimeStamp(GcStruct):
 	@property
 	def ns(self):
 		return self.fields['ns']
+
+
+class Softref:
+	kinds = ["rvp", "btr", 
+			"bk1", "bk2", "gk", "rk", "lp", "kr", "kz",
+			"vp", "f", "dc"]
+	regexp = re.compile("(%s)([0-9.]+)" % '|'.join(kinds))
+	
+	@classmethod
+	def from_text(cls, text):
+		for token in text.split():
+			for sr in cls.from_token(token):
+				yield sr
+
+	@classmethod
+	def from_token(cls, token):
+		m = cls.regexp.match(token)
+		if m==None:
+			return
+		yield cls(kind=m.group(1),number=m.group(2))
+
+	def __init__(self, kind, number):
+		self._kind = kind
+		self._number = number
+
+	@property
+	def kind(self):
+		return self._kind
+
+	@property
+	def number(self):
+		return self._number
+	
+	def __repr__(self):
+		return self.kind + self.number
