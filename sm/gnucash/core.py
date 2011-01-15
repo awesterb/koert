@@ -30,6 +30,7 @@ class Book(GcObj):
 		self._root = None
 		self._set_account_refs()
 		self._trs_by_num = None
+		self._trs_by_softref = None
 
 	def _set_account_refs(self):
 		for ac in self.accounts.itervalues():
@@ -125,6 +126,22 @@ class Book(GcObj):
 				raise KeyError("%s has no child named %s" % (
 					ac, bit))
 		return ac
+
+	@property
+	def trs_by_softref(self):
+		if self._trs_by_softref == None:
+			self._set_trs_by_softref()
+		return self._trs_by_softref
+
+	def _set_trs_by_softref(self):
+		res = {}
+		for tr in self.transactions.itervalues():
+			for sr in tr.softrefs:
+				code = sr.code
+				if code not in res:
+					res[code] = []
+				res[code].append(tr)
+		self._trs_by_softref = res
 
 
 class Account(GcObj):
@@ -230,6 +247,10 @@ class Transaction(GcObj):
 	def currency(self):
 		return self.fields['currency']
 
+	@property
+	def softrefs(self):
+		return self._softrefs
+
 
 class Split(GcObj):
 	def __init__(self, fields):
@@ -331,4 +352,8 @@ class Softref:
 		return self._number
 	
 	def __repr__(self):
+		return "<Softref %s>" % self.code
+
+	@property
+	def code(self):
 		return self.kind + self.number
