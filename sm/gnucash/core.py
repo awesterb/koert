@@ -216,7 +216,7 @@ class Account(GcObj):
 class Transaction(GcObj):
 	def __init__(self, fields):
 		GcObj.__init__(self, fields)
-		self._softrefs = Softref.from_text(self.description)
+		self._softrefs = tuple(Softref.from_text(self.description))
 
 	def __repr__(self):
 		return "<tr%s %s %s>" % (self.num if self.num else "", 
