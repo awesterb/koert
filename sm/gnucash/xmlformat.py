@@ -7,7 +7,8 @@ from koert.xml.sax.stacking.switch.cases import List as ListCase, \
 		Dict as DictCase, Single as SingleCase, No as NoCase
 
 class SaxHandler(StackingHandler):
-	def __init__(self):
+	def __init__(self, scheme):
+		self.scheme = scheme
 		StackingHandler.__init__(self, PreGncSH())
 
 
@@ -44,7 +45,7 @@ class BookSH(SwitchSH):
 			"gnc:budget": NoCase})
 	
 	def post_result(self, sh, result):
-		SwitchSH.post_result(self, sh, Book(result))
+		SwitchSH.post_result(self, sh, Book(result, sh.scheme))
 
 
 class CommoditySH(SwitchSH):

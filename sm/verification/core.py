@@ -1,5 +1,4 @@
 from sarah.order import sort_by_successors
-from fin7scheme import softref_kinds_by_account_path
 
 class Verifier(object):
 	def __init__(self, gcf):
@@ -190,7 +189,7 @@ class TrHaveFin7Softref(Verlet):
 		return len(self.issues)==0
 
 	def get_ok_ac(self, ac):
-		softref_kinds = self.get_softref_kinds(ac)
+		softref_kinds = ac._softref_kinds
 		if softref_kinds == None:
 			return
 		for sp in ac.mutations:
@@ -198,12 +197,4 @@ class TrHaveFin7Softref(Verlet):
 					if ref.kind in softref_kinds]
 			if len(good_refs)==0:
 				yield sp.transaction
-
-	def get_softref_kinds(self, ac):
-		while ac.parent != None and \
-				ac.path not in softref_kinds_by_account_path:
-			ac = ac.parent
-		if ac.parent == None:
-			return None
-		return softref_kinds_by_account_path[ac.path]
 

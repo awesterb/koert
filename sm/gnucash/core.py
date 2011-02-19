@@ -25,12 +25,14 @@ class File(GcStruct):
 
 
 class Book(GcObj):
-	def __init__(self, fields):
+	def __init__(self, fields, scheme):
 		GcObj.__init__(self, fields)
 		self._root = None
+		self._scheme = scheme
 		self._set_account_refs()
 		self._trs_by_num = None
 		self._trs_by_softref = None
+		self._apply_scheme()
 
 	def _set_account_refs(self):
 		for ac in self.accounts.itervalues():
@@ -73,7 +75,27 @@ class Book(GcObj):
 			raise ValueError("Two root-accounts found: "
 					" %s and %s" % (self._root, ac))
 		self._root = ac
+
+	def _apply_scheme(self):
+		todo = [self.root]
+		while(len(todo)>0):
+			ac = todo.pop()
+			self._apply_scheme_ac(ac)
+			todo.extend(ac.children.itervalues())
 	
+	def _apply_scheme_ac(self, ac):
+		if ac.parent!=None and ac.parent._softref_kinds!=None:
+			ac._softref_kinds = ac.parent._softref_kinds
+			return
+		if ac.path in self.scheme.softref_kinds_by_account_path:
+			ac._softref_kinds = \
+				self.scheme.softref_kinds_by_account_path[
+					ac.path]
+
+	@property
+	def scheme(self):
+		return self._scheme
+
 	@property
 	def root(self):
 		return self._root
@@ -152,6 +174,7 @@ class Account(GcObj):
 		self._parent = None 
 		self._children = {}
 		self._mutations = []	
+		self._softref_kinds = None
 
 	def __repr__(self):
 		return "<ac%s>" % self.nice_id
