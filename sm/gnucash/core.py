@@ -323,8 +323,9 @@ class TimeStamp(GcStruct):
 class Softref:
 	kinds = ["rvp", "btr", 
 			"bk1", "bk2", "gk", "rk", "lp", "kr", "kz",
+			"bk1-", "bk2-", "gk-", "rk-", "kr-", "kz-",
 			"vp", "f", "dc"]
-	regexp = re.compile("(%s)([0-9.]+)" % '|'.join(kinds))
+	regexp = re.compile("(%s)([0-9.]+)" % '|'.join(kinds), re.IGNORECASE)
 	
 	@classmethod
 	def from_text(cls, text):
@@ -340,8 +341,8 @@ class Softref:
 		yield cls(kind=m.group(1),number=m.group(2))
 
 	def __init__(self, kind, number):
-		self._kind = kind
-		self._number = number
+		self._kind, self._number \
+				= map(lambda x: x.lower(), (kind, number))
 
 	@property
 	def kind(self):
