@@ -98,9 +98,9 @@ class Count:
 Count.zero = Count(countlets={})
 
 class BarForm:
-	def __init__(self, date, counter, shift, sell_count, 
+	def __init__(self, event, counter, shift, sell_count, 
 			startbal, endbal, number):
-		self.date = date
+		self.event = event
 		self.counter = counter
 		self.shift = shift
 		self.startbal = startbal
@@ -132,9 +132,15 @@ class BarForm:
 		startbal = Decimal(header[3])
 		endbal = Decimal(header[4])
 		sell_count = Count.from_array(ar[2:], boozedir.productdir)
-		return cls(date=date, counter=counter, shift=shift,
+		event = boozedir.eventdir[date]
+		return cls(event=event, counter=counter, shift=shift,
 				startbal=startbal, endbal=endbal,
 				sell_count=sell_count, number=number)
+
+	@property
+	def date(self):
+		return self.event.date
+
 
 class BarFormDir:
 	def __init__(self, path, boozedir):
@@ -169,7 +175,33 @@ class BarFormDir:
 			if number in self.barforms:
 				raise ValueError("double number")
 			self.barforms[number] = bf
-			
+			bf.event.register_barform(bf)
+
+class Event:
+	def __init__(self, date):
+		self.date = date
+		self.barforms = {}
+	
+	def register_barform(self, barform):
+		shift = barform.shift
+		if shift in self.barforms:
+			raise ValueError("shift already taken")
+		self.barforms[shift] = barform
+	
+	@property
+	def shifts(self):
+		return tuple(self.barforms.iterkeys())
+
+
+class EventDir:
+	def __init__(self):
+		self.events = {}
+	
+	def __getitem__(self, date):
+		if date not in self.events:
+			self.events[date] = Event(date)
+		return self.events[date]
+
 
 class BeertankCount:
 	def __init__(self, date, start, end):
@@ -179,6 +211,7 @@ class BeertankCount:
 
 class BoozeDir:
 	def __init__(self, path):
+		self.eventdir = EventDir()
 		self.productdir = ProductCat(ospath.join(path, 
 			"product_catalog.csv"))
 		self.barformdir = BarFormDir(ospath.join(path,
