@@ -202,7 +202,8 @@ class BarForm:
 			year, month, day = map(int, date_str.split("-"))
 			date = datetime.date(year, month, day)
 		counter = header[1]
-		shift = header[2]
+		shift_str = header[2].strip()
+		shift = int(header[2]) if shift_str!="" else None
 		startbal = Decimal(header[3])
 		endbal = Decimal(header[4])
 		sell_count = Count.from_array(ar[2:], boozedir.productdir)
