@@ -2,8 +2,9 @@ import datetime
 from os import listdir, path as ospath
 from decimal import Decimal
 from rikf import open_rikf_ar
+from warnings import warn
 
-class Product:
+class Factor:
 	def __init__(self, handle, name):
 		self.handle = handle
 		self.name = name
@@ -11,7 +12,7 @@ class Product:
 	@classmethod
 	def from_line(cls, line):
 		if len(line)<1:
-			raise ValueError("product line is too small")
+			raise ValueError("factor line is too small")
 		handle, name = line[0:2]
 		return cls(handle=handle, name=name)
 
@@ -22,25 +23,94 @@ class Product:
 		return hash(self.handle)^hash(self.name)
 
 
-class ProductCat:
-	def __init__(self, path):
+class Product:
+	def __init__(self, handle, name, factors):
+		self.handle = handle
+		self.name = name
+		self.factors = factors
+	
+	@classmethod
+	def from_line(cls, line, boozedir):
+		if len(line)<1:
+			raise ValueError("product line is too small")
+		handle, name = line[0:2]
+		factors = {}
+		for i in xrange(3,len(line)):
+			field = line[i].strip()
+			if field=="":
+				break
+			comps = field.split(":")
+			if(len(comps)!=2):
+				raise ValueError("error in factor multiple's"
+						" formatting")
+			amount_str, factor_name = comps
+			amount = int(amount_str)
+			factor = boozedir.factordir[factor_name]
+			if factor in factors:
+				raise ValueError("factor occurs twice")
+			factors[factor] = amount
+		return cls(handle=handle, name=name, factors=Count(factors))
+
+	def __repr__(self):
+		return self.name
+
+	def __hash__(self):
+		return hash(self.handle)^hash(self.name)
+
+class ObjDirErr(Exception):
+	pass
+
+class ProductDir:
+	def __init__(self, path, boozedir):
 		products = {}
+		self.boozedir = boozedir
 		self.path = path
 		ar = open_rikf_ar(path)
 		for line in ar:
-			product = Product.from_line(line)
+			product = Product.from_line(line, self.boozedir)
 			handle = product.handle
 			if handle in products:
 				raise ValueError("product name appears twice")
 			products[handle]=product
 		self.products = products
 
+	def __repr__(self):
+		return "Product Directory"
+
 	def __getitem__(self, name):
+		if name not in self.products:
+			warn("Unknown product: %s" % name)
+			raise ObjDirErr()
 		return self.products[name]
 	
 	def __contains__(self, name):
 		return name in self.products
 
+
+class FactorDir:
+	def __init__(self, path):
+		factors = {}
+		self.path = path
+		ar = open_rikf_ar(path)
+		for line in ar:
+			factor = Factor.from_line(line)
+			handle = factor.handle
+			if handle in factors:
+				raise ValueError("factor name appears twice")
+			factors[handle]=factor
+		self.factors = factors
+
+	def __repr__(self):
+		return "Factor Directory"
+
+	def __getitem__(self, name):
+		if name not in self.factors:
+			warn("Unknown factor: %s" % name)
+			raise ObjDirErr()
+		return self.factors[name]
+	
+	def __contains__(self, name):
+		return name in self.factors
 
 class Count:
 	def __init__(self, countlets):
@@ -52,45 +122,49 @@ class Count:
 		return self.countlets[item]
 
 	def __repr__(self):
-		return "\n".join(["%s x %s" % (amount, prod) for 
-			prod, amount in self.countlets.iteritems()])
+		return "\n".join(["%s x %s" % (amount, obj) for 
+			obj, amount in self.countlets.iteritems()])
 
 	@classmethod
-	def from_array(cls, ar, proddir):
+	def from_array(cls, ar, objdir):
 		countlets = {}
 		for line in ar:
-			product, amount = cls.countlet_from_line(line, proddir)
-			if product in countlets:
-				raise ValueError("product appears twice")
-			countlets[product] = amount
+			try:
+				obj, amount = cls.countlet_from_line(line, 
+						objdir)
+			except ObjDirErr:
+				continue
+			if obj in countlets:
+				raise ValueError("obj appears twice")
+			countlets[obj] = amount
 		return cls(countlets=countlets)
 	
 	@classmethod
-	def countlet_from_line(cls, line, proddir):
+	def countlet_from_line(cls, line, objdir):
 		if len(line)==0:
 			raise ValueError("no product given")
-		product = proddir[line[0]]
+		obj = objdir[line[0]]
 		amount = None
 		if len(line)==1:
 			amount = 0
 		else:
 			amount_str = line[1].strip()
 			amount = 0 if amount_str=="" else int(amount_str)
-		return product, amount
+		return obj, amount
 
 	def __add__(self, other):
 		countlets = {}
 		for a in (self, other):
-			for prod in a.countlets.iterkeys():
-				if prod not in countlets:
-					countlets[prod] = 0
-				countlets[prod] += a[prod]
+			for obj in a.countlets.iterkeys():
+				if obj not in countlets:
+					countlets[obj] = 0
+				countlets[obj] += a[obj]
 		return Count(countlets=countlets)
 	
 	def __neg__(self):
 		countlets = {}
-		for prod in self.countlets.iterkeys():
-			countlets[prod] = -self.countlets[prod]
+		for obj in self.countlets.iterkeys():
+			countlets[obj] = -self.countlets[obj]
 		return Count(countlets)
 	
 	
@@ -212,7 +286,9 @@ class BeertankCount:
 class BoozeDir:
 	def __init__(self, path):
 		self.eventdir = EventDir()
-		self.productdir = ProductCat(ospath.join(path, 
-			"product_catalog.csv"))
+		self.factordir = FactorDir(ospath.join(path,
+			"factor_catalog.csv"))
+		self.productdir = ProductDir(ospath.join(path, 
+			"product_catalog.csv"), self)
 		self.barformdir = BarFormDir(ospath.join(path,
 			"barforms"), self)
