@@ -241,9 +241,11 @@ class BarFormDir:
 			if fn[0]==".":
 				continue
 			comps = fn.split(".")
-			if len(comps)>1 and (comps[-1][-1]=="~" 
-					or comps[-1][-1]=="swp"):
-				continue
+			if len(comps)>1:
+				if comps[-1][-1]=="~" or comps[-1][-1]=="swp":
+					continue
+				if comps[0]=='template':
+					continue
 			number = comps[0]
 			path = ospath.join(self.path, fn)
 			bf = BarForm.from_path(path, number, self.boozedir)
