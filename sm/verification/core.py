@@ -197,4 +197,3 @@ class TrHaveFin7Softref(Verlet):
 					if ref.kind in softref_kinds]
 			if len(good_refs)==0:
 				yield sp.transaction
-

@@ -361,11 +361,13 @@ class Softref:
 		m = cls.regexp.match(token)
 		if m==None:
 			return
-		yield cls(kind=m.group(1),number=m.group(2))
+		kind, number_str = m.group(1, 2)
+		number = number_str.split(".")
+		yield cls(kind=kind, number=number)
 
 	def __init__(self, kind, number):
-		self._kind, self._number \
-				= map(lambda x: x.lower(), (kind, number))
+		self._kind = kind.lower()
+		self._number = map(lambda x: x.lower(), number)
 
 	@property
 	def kind(self):
@@ -380,4 +382,4 @@ class Softref:
 
 	@property
 	def code(self):
-		return self.kind + self.number
+		return self.kind + '.'.join(self._number)
