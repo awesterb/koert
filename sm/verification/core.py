@@ -197,3 +197,26 @@ class TrHaveFin7Softref(Verlet):
 					if ref.kind in softref_kinds]
 			if len(good_refs)==0:
 				yield sp.transaction
+
+@fact(descr="no transaction refers to softrefs particular to accounts "
+		"it does not mutate",
+		deps=((OneBook,True),))
+class TrSoftrefsAreFin7Proper(Verlet):
+	def get_ok(self):
+		fails = []
+		for tr in self.v.book.transactions.itervalues():
+			fails.extend(self.get_ok_tr(tr))
+		if len(fails)>0:
+			self.issues.append("%s do" % (tuple(fails),))
+		return len(self.issues)==0
+
+	def get_ok_tr(self, tr):
+		absk = self.v.book.acs_by_softref_kind
+		for sr in tr.softrefs:
+			if sr.kind not in absk:
+				continue
+			allowed_acs = absk[sr.kind]
+			if all([(sp.account.path not in allowed_acs)\
+					for sp in tr.splits.itervalues()]):
+				yield tr
+
