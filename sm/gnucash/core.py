@@ -32,6 +32,7 @@ class Book(GcObj):
 		self._set_account_refs()
 		self._trs_by_num = None
 		self._trs_by_softref = None
+		self._acs_by_softref_kind = None
 		self._apply_scheme()
 
 	def _set_account_refs(self):
@@ -164,6 +165,22 @@ class Book(GcObj):
 					res[code] = []
 				res[code].append(tr)
 		self._trs_by_softref = res
+
+	@property
+	def acs_by_softref_kind(self):
+		if self._acs_by_softref_kind == None:
+			self._set_acs_by_softref_kind()
+		return self._acs_by_softref_kind
+	
+	def _set_acs_by_softref_kind(self):
+		res = {}
+		for ac, kinds in self.scheme.softref_kinds_by_account_path\
+				.iteritems():
+			for kind in kinds:
+				if kind not in res:
+					res[kind]=[]
+				res[kind].append(ac)
+		self._acs_by_softref_kind = res
 
 
 class Account(GcObj):
