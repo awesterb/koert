@@ -57,7 +57,11 @@ class Product:
 	def __hash__(self):
 		return hash(self.handle)^hash(self.name)
 
-class ObjDirErr(Exception):
+# We often ignore the following errors
+class MildErr(Exception):
+	pass
+
+class ObjDirErr(MildErr):
 	pass
 
 class ProductDir:
@@ -135,7 +139,8 @@ class Count:
 			except ObjDirErr:
 				continue
 			if obj in countlets:
-				raise ValueError("obj appears twice")
+				raise MildErr("obj appears twice: '%s'"
+						% obj)
 			countlets[obj] = amount
 		return cls(countlets=countlets)
 	
@@ -173,7 +178,7 @@ Count.zero = Count(countlets={})
 
 class BarForm:
 	def __init__(self, event, counter, shift, sell_count, 
-			startbal, endbal, number):
+			startbal, endbal, number, pricelist):
 		self.event = event
 		self.counter = counter
 		self.shift = shift
@@ -181,6 +186,7 @@ class BarForm:
 		self.endbal = endbal
 		self.sell_count = sell_count
 		self.number = number
+		self.pricelist = pricelist
 
 	@classmethod
 	def from_path(cls, path, number, boozedir):
@@ -191,26 +197,30 @@ class BarForm:
 	def from_array(cls, ar, number, boozedir):
 		if len(ar)==0 or len(ar[0])==0 or ar[0][0].lower()!="bar":
 			raise ValueError("Missing 'bar' title")
-		if len(ar)==1 or len(ar[1])<5:
+		if len(ar)==1 or len(ar[1])<6:
 			raise ValueError("Incomplete/missing header")
-		# header:  date ; counter ; shift# ; startbal ; endbal
+		# header:
+		#   pricelist; date ; counter ; shift# ; startbal ; endbal
 		header = ar[1]
-		date_str = header[0].strip()
+		pricelist_str = header[0].strip()
+		pricelist = boozedir.pricelistdir[pricelist_str]
+		date_str = header[1].strip()
 		if date_str=="":
 			date = None
 		else:
 			year, month, day = map(int, date_str.split("-"))
 			date = datetime.date(year, month, day)
-		counter = header[1]
-		shift_str = header[2].strip()
-		shift = int(header[2]) if shift_str!="" else None
-		startbal = Decimal(header[3])
-		endbal = Decimal(header[4])
+		counter = header[2]
+		shift_str = header[3].strip()
+		shift = int(header[3]) if shift_str!="" else None
+		startbal = Decimal(header[4])
+		endbal = Decimal(header[5])
 		sell_count = Count.from_array(ar[2:], boozedir.productdir)
 		event = boozedir.eventdir[date]
 		return cls(event=event, counter=counter, shift=shift,
 				startbal=startbal, endbal=endbal,
-				sell_count=sell_count, number=number)
+				sell_count=sell_count, number=number,
+				pricelist=pricelist)
 
 	@property
 	def date(self):
@@ -236,23 +246,23 @@ class BarFormDir:
 	def _load_barforms(self):
 		self.barforms = {}
 		for fn in listdir(self.path):
-			if len(fn)==0:
+			comps, ignore = BoozeDir.processFn(fn)
+			if ignore:
 				continue
-			if fn[0]==".":
-				continue
-			comps = fn.split(".")
-			if len(comps)>1:
-				if comps[-1][-1]=="~" or comps[-1][-1]=="swp":
-					continue
-				if comps[0]=='template':
-					continue
-			number = comps[0]
-			path = ospath.join(self.path, fn)
-			bf = BarForm.from_path(path, number, self.boozedir)
-			if number in self.barforms:
-				raise ValueError("double number")
-			self.barforms[number] = bf
-			bf.event.register_barform(bf)
+			try:
+				bf = self._load_barform(fn, comps)
+				bf.event.register_barform(bf)
+			except MildErr as me:
+				warn(("failed to load barform '%s': %s") \
+						% (fn, me))
+			self.barforms[bf.number] = bf
+
+	def _load_barform(self, fn, comps):
+		number = comps[0]
+		path = ospath.join(self.path, fn)
+		if number in self.barforms:
+			raise ValueError("double number")
+		return BarForm.from_path(path, number, self.boozedir)
 
 class Event:
 	def __init__(self, date):
@@ -262,7 +272,8 @@ class Event:
 	def register_barform(self, barform):
 		shift = barform.shift
 		if shift in self.barforms:
-			raise ValueError("shift already taken")
+			raise MildErr("shift already taken: %s at %s" 
+					% (shift, self.date))
 		self.barforms[shift] = barform
 	
 	@property
@@ -286,6 +297,40 @@ class BeertankCount:
 		self.start = start
 		self.end = end
 
+class PriceList:
+	def __init__(self, name, prices):
+		self.prices = prices
+		self.name = name
+	
+	@classmethod
+	def from_path(cls, path, name, boozedir):
+		warn("loading of pricelists not yet implemented")
+		# TODO:  implement
+	
+
+class PriceListDir:
+	def __init__(self, path, boozedir):
+		self.pricelists = {}
+		self.boozedir = boozedir
+		self.path = path
+		self._load_pricelists()
+	
+	def _load_pricelists(self):
+		for fn in listdir(self.path):
+			comps, ignore = BoozeDir.processFn(fn)
+			if ignore:
+				continue
+			path = ospath.join(self.path, fn)
+			name = '.'.join(comps[0:-1])
+			bf = PriceList.from_path(path, name, self.boozedir)
+			self.pricelists[name] = bf
+	
+	def __getitem__(self, name):
+		if name not in self.pricelists:
+			warn("Unknown pricelist: %s" % name)
+			raise ObjDirErr()
+		return self.pricelists[name]
+
 class BoozeDir:
 	def __init__(self, path):
 		self.eventdir = EventDir()
@@ -293,5 +338,22 @@ class BoozeDir:
 			"factor_catalog.csv"))
 		self.productdir = ProductDir(ospath.join(path, 
 			"product_catalog.csv"), self)
+		self.pricelistdir = PriceListDir(ospath.join(path,
+			"pricelists"), self)
 		self.barformdir = BarFormDir(ospath.join(path,
 			"barforms"), self)
+
+	@classmethod
+	def processFn(cls, fn):
+		comps = fn.split(".")
+		if len(fn)==0:
+			return comps, True
+		if fn[0]==".":
+			return comps, True
+		if len(comps)>1:
+			if comps[-1][-1]=="~" or comps[-1][-1]=="swp":
+				return comps, True
+			if comps[0]=='template':
+				return comps, True
+		return comps, False
+
