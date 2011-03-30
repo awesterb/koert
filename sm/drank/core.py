@@ -126,13 +126,15 @@ class Count:
 		return self.countlets[item]
 
 	def __repr__(self):
-		return "\n".join(["%s x %s" % (amount, obj) for 
+		return "\n".join(["%s: %s" % (obj, amount) for 
 			obj, amount in self.countlets.iteritems()])
 
 	@classmethod
 	def from_array(cls, ar, objdir):
 		countlets = {}
 		for line in ar:
+			if len(line)==0:
+				continue
 			try:
 				obj, amount = cls.countlet_from_line(line, 
 						objdir)
@@ -147,14 +149,19 @@ class Count:
 	@classmethod
 	def countlet_from_line(cls, line, objdir):
 		if len(line)==0:
-			raise ValueError("no product given")
+			raise ValueError("no object given")
 		obj = objdir[line[0]]
 		amount = None
 		if len(line)==1:
 			amount = 0
 		else:
 			amount_str = line[1].strip()
-			amount = 0 if amount_str=="" else int(amount_str)
+			try:
+				amount = 0 if amount_str=="" \
+						else int(amount_str)
+			except ValueError:
+				raise MildErr("could not parse amount: '%s'" \
+						% amount_str)
 		return obj, amount
 
 	def __add__(self, other):
@@ -304,9 +311,16 @@ class PriceList:
 	
 	@classmethod
 	def from_path(cls, path, name, boozedir):
-		warn("loading of pricelists not yet implemented")
-		# TODO:  implement
-	
+		ar = open_rikf_ar(path)
+		return cls.from_array(ar, name, boozedir)
+
+	@classmethod
+	def from_array(cls, ar, name, boozedir):
+		if len(ar)==0 or len(ar[0])==0 or \
+				ar[0][0].lower()!="prijslijst":
+			raise MildErr("Missing 'prijslijst' title")
+		prices = Count.from_array(ar[1:], boozedir.productdir)
+		return cls(name=name,prices=prices)
 
 class PriceListDir:
 	def __init__(self, path, boozedir):
@@ -320,10 +334,19 @@ class PriceListDir:
 			comps, ignore = BoozeDir.processFn(fn)
 			if ignore:
 				continue
-			path = ospath.join(self.path, fn)
-			name = '.'.join(comps[0:-1])
-			bf = PriceList.from_path(path, name, self.boozedir)
-			self.pricelists[name] = bf
+			try:
+				bf = self._load_pricelist(fn, comps)
+			except MildErr as me:
+				warn("failed to load pricelist '%s': %s" \
+						% (fn, me))
+				continue
+			self.pricelists[bf.name] = bf
+	
+	def _load_pricelist(self, fn, comps):
+		path = ospath.join(self.path, fn)
+		name = '.'.join(comps[0:-1])
+		return PriceList.from_path(path, name, self.boozedir)
+
 	
 	def __getitem__(self, name):
 		if name not in self.pricelists:
