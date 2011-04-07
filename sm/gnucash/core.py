@@ -362,7 +362,7 @@ class TimeStamp(GcStruct):
 
 class Softref:
 	kinds = ["rvp", "btr", 
-			"bk1", "bk2", "gk", "rk", "lp", "kr", "kz",
+			"bk1", "bk2", "gk", "rk", "lp", "lp-", "kr", "kz",
 			"bk1-", "bk2-", "gk-", "rk-", "kr-", "kz-",
 			"vp", "f", "dc"]
 	regexp = re.compile("(%s)([0-9.]+)" % '|'.join(kinds), re.IGNORECASE)
