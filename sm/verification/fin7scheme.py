@@ -7,5 +7,5 @@ softref_kinds_by_account_path = {
 	":Activa:Vlottend:Liquide middelen:Kas:Kleine zwarte kas": \
 			["kz","kz-"],
 	":Activa:Vlottend:Liquide middelen:Kas:Kleine rode kas" : ["kr","kr-"],
-	":Activa:Vlottend:Liquide middelen:Kas:Lolliepot" : ["lp"]
+	":Activa:Vlottend:Liquide middelen:Kas:Lolliepot" : ["lp","lp-"]
 }
