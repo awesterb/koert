@@ -4,6 +4,15 @@ from decimal import Decimal
 from rikf import open_rikf_ar
 from warnings import warn
 
+
+def parse_date(date_str):
+	if date_str=="":
+		date = None
+	else:
+		year, month, day = map(int, date_str.split("-"))
+		date = datetime.date(year, month, day)
+	return date
+
 class Factor:
 	def __init__(self, handle, name):
 		self.handle = handle
@@ -61,7 +70,13 @@ class Product:
 class MildErr(Exception):
 	pass
 
+# raised when, e.g., product does not appear in productdir.
 class ObjDirErr(MildErr):
+	pass
+
+# raised when the string representation of a countlet
+# has a white object name.
+class NoObjStrErr(MildErr):
 	pass
 
 class ProductDir:
@@ -140,9 +155,12 @@ class Count:
 						objdir)
 			except ObjDirErr:
 				continue
+			except NoObjStrErr:
+				continue
 			if obj in countlets:
 				raise MildErr("obj appears twice: '%s'"
-						% obj)
+						"(amount: %s)"
+						% (obj, amount))
 			countlets[obj] = amount
 		return cls(countlets=countlets)
 	
@@ -150,6 +168,9 @@ class Count:
 	def countlet_from_line(cls, line, objdir):
 		if len(line)==0:
 			raise ValueError("no object given")
+		obj_str = line[0].strip()
+		if(obj_str==""):
+			raise NoObjStrErr()
 		obj = objdir[line[0]]
 		amount = None
 		if len(line)==1:
@@ -211,12 +232,7 @@ class BarForm:
 		header = ar[1]
 		pricelist_str = header[0].strip()
 		pricelist = boozedir.pricelistdir[pricelist_str]
-		date_str = header[1].strip()
-		if date_str=="":
-			date = None
-		else:
-			year, month, day = map(int, date_str.split("-"))
-			date = datetime.date(year, month, day)
+		date = parse_date(header[1].strip())
 		counter = header[2]
 		shift_str = header[3].strip()
 		shift = int(header[3]) if shift_str!="" else None
@@ -277,6 +293,11 @@ class Event:
 	def __init__(self, date):
 		self.date = date
 		self.barforms = {}
+		self.btc = None
+
+	def __str__(self):
+		return "@"+("unspecified-time"
+				if self.date==None else str(self.date))
 	
 	def register_barform(self, barform):
 		shift = barform.shift
@@ -284,6 +305,12 @@ class Event:
 			raise MildErr("shift already taken: %s at %s" 
 					% (shift, self.date))
 		self.barforms[shift] = barform
+
+	def register_btc(self, btc):
+		if self.btc != None:
+			raise MildErr("double registration")
+		self.btc= btc
+
 	
 	@property
 	def shifts(self):
@@ -295,16 +322,30 @@ class EventDir:
 		self.events = {}
 	
 	def __getitem__(self, date):
+		if isinstance(date,str):
+			date = parse_date(date)
+		if not isinstance(date,datetime.date) and date!=None:
+			raise ValueError("date not a datetime, str or None:"
+					" %s" %	repr(date))
 		if date not in self.events:
 			self.events[date] = Event(date)
 		return self.events[date]
 
+	# btc = beertankcount
+	@classmethod
+	def _load_btc_from_path(cls, path, boozedir):
+		return cls._load_btc_from_array(open_rikf_ar(path), boozedir)
 
-class BeertankCount:
-	def __init__(self, date, start, end):
-		self.date = date
-		self.start = start
-		self.end = end
+	@classmethod
+	def _load_btc_from_array(cls, ar, boozedir):
+		if len(ar)==0 or len(ar[0])==0 or ar[0][0].lower()!="tap":
+			raise MildErr("beertankcount.csv has faulty header")
+		count = Count.from_array(ar[1:], boozedir.eventdir)
+		for event in count.countlets.iterkeys():
+			event.register_btc(count[event])
+		return count
+
+
 
 class PriceList:
 	def __init__(self, name, prices):
@@ -403,11 +444,14 @@ class CommodityView:
 		prod_name, = t
 		product = self.comdir.boozedir.productdir[prod_name]
 		return self.comdir.get_commodity(product, self.pricelist)
-		
+
 
 class BoozeDir:
 	def __init__(self, path):
 		self.eventdir = EventDir()
+		self.beertankcount = \
+				EventDir._load_btc_from_path(ospath.join(path,
+			"beertankcount.csv"), self)
 		self.factordir = FactorDir(ospath.join(path,
 			"factor_catalog.csv"))
 		self.productdir = ProductDir(ospath.join(path, 
