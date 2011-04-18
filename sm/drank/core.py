@@ -222,7 +222,9 @@ class BarForm:
 		shift = int(header[3]) if shift_str!="" else None
 		startbal = Decimal(header[4])
 		endbal = Decimal(header[5])
-		sell_count = Count.from_array(ar[2:], boozedir.productdir)
+		# below, to translate "product@pricelist" to a commodity
+		commodity_view = boozedir.commoditydir.get_view(pricelist)
+		sell_count = Count.from_array(ar[2:], commodity_view)
 		event = boozedir.eventdir[date]
 		return cls(event=event, counter=counter, shift=shift,
 				startbal=startbal, endbal=endbal,
@@ -354,6 +356,55 @@ class PriceListDir:
 			raise ObjDirErr()
 		return self.pricelists[name]
 
+class Commodity:
+	def __init__(self, product, pricelist):
+		self.product = product
+		self.pricelist = pricelist
+	
+	def __hash__(self):
+		return hash(self.product) ^ hash(self.pricelist)
+
+
+class CommodityDir:
+	def __init__(self, boozedir):
+		self.views = {}
+		self.commodities = {}
+		self.boozedir = boozedir
+
+	def get_view(self, pricelist):
+		if pricelist not in self.views:
+			view = CommodityView(self, pricelist)
+			self.views[pricelist] = view
+		return self.views[pricelist]
+
+	def get_commodity(self, product, pricelist):
+		pair = (product, pricelist)
+		if pair not in self.commodities:
+			self.commodities[pair] = Commodity(*pair)
+		return self.commodities[pair]
+
+	def get_commodity_by_names(self, prod_name, pl_name):
+		product = self.boozedir.productdir[prod_name]
+		pricelist = self.boozedir.pricelistdir[pl_name]
+		return self.get_commodity(product, pricelist)
+
+class CommodityView:
+	def __init__(self, comdir, pricelist):
+		self.comdir = comdir
+		self.pricelist = pricelist
+	
+	def __getitem__(self, name):
+		t = name.split("@")
+		if len(t) > 2:
+			raise MildErr("commodity name '%s' has too many '@'s"
+					% name)
+		if len(t)==2:
+			return self.comdir.get_commodity_by_names(*t)
+		prod_name, = t
+		product = self.comdir.boozedir.productdir[prod_name]
+		return self.comdir.get_commodity(product, self.pricelist)
+		
+
 class BoozeDir:
 	def __init__(self, path):
 		self.eventdir = EventDir()
@@ -363,6 +414,7 @@ class BoozeDir:
 			"product_catalog.csv"), self)
 		self.pricelistdir = PriceListDir(ospath.join(path,
 			"pricelists"), self)
+		self.commoditydir = CommodityDir(self)
 		self.barformdir = BarFormDir(ospath.join(path,
 			"barforms"), self)
 
