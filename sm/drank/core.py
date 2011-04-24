@@ -388,6 +388,9 @@ class PriceListDir:
 	def _load_pricelist(self, fn, comps):
 		path = ospath.join(self.path, fn)
 		name = '.'.join(comps[0:-1])
+		if name in self.pricelists:
+			raise MildErr("pricelist with this"
+					"name already exists.")
 		return PriceList.from_path(path, name, self.boozedir)
 
 	
@@ -396,6 +399,75 @@ class PriceListDir:
 			warn("Unknown pricelist: %s" % name)
 			raise ObjDirErr()
 		return self.pricelists[name]
+
+
+class Deliv:
+	def __init__(self, code, date, description, count):
+		self.code = code
+		self.date = date
+		self.description = description
+		self.count = count
+	
+	@classmethod
+	def from_path(cls, path, code, boozedir):
+		return cls.from_array(open_rikf_ar(path), code, boozedir)
+
+	@classmethod
+	def from_array(cls, ar, code, boozedir):
+		if len(ar)==0 or len(ar[0])==0:
+			raise MildErr("no title")
+		if ar[0][0].strip().lower()!="levering":
+			raise MildErr("title is not 'levering'")
+		if len(ar)==1 or len(ar[1])<=2:
+			raise MildErr("header is too small")
+		header = ar[1]
+		try:
+			pricelist = boozedir.pricelistdir[header[0]]
+		except ObjDirErr:
+			raise MildErr("could not find pricelist")
+		date = parse_date(header[1])
+		description = header[2].strip().lower() if len(header>=3) \
+				else None
+		view = boozedir.commoditydir.get_view(pricelist)
+		count = Count.from_array(ar[2:], view)
+		return cls(code, date, description, count)
+
+
+class DelivDir:
+	def __init__(self, path, boozedir):
+		self.delivs = {}
+		self.boozedir = boozedir
+		self.path = path
+		self._load_delivs()
+	
+	def _load_delivs(self):
+		for fn in listdir(self.path):
+			comps, ignore = BoozeDir.processFn(fn)
+			if ignore:
+				continue
+			try:
+				d = self._load_deliv(fn, comps)
+			except MildErr as me:
+				warn("failed to load delivery '%s': %s" \
+						% (fn, me))
+				continue
+			self.delivs[d.code] = d
+	
+	def _load_deliv(self, fn, comps):
+		path = ospath.join(self.path, fn)
+		code = ".".join(comps[0:-1])
+		if code in self.delivs:
+			raise MildErr("delivery with this "
+					"name already exists.")
+		return Deliv.from_path(path, code, self.boozedir)
+
+	def __getitem__(self, code):
+		if code not in self.delivs:
+			warn("Unknown delivery: %s" % code)
+			raise ObjDirErr()
+		return self.delivs[code]
+	
+
 
 class Commodity:
 	def __init__(self, product, pricelist):
@@ -461,6 +533,8 @@ class BoozeDir:
 		self.commoditydir = CommodityDir(self)
 		self.barformdir = BarFormDir(ospath.join(path,
 			"barforms"), self)
+		self.delivdir = DelivDir(ospath.join(path, 
+			"deliverance"), self)
 
 	@classmethod
 	def processFn(cls, fn):
