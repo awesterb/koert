@@ -122,7 +122,8 @@ class FactorDir:
 			factor = Factor.from_line(line)
 			handle = factor.handle
 			if handle in factors:
-				raise ValueError("factor name appears twice")
+				raise ValueError("factor handle appears "
+					"twice: %s" % (handle,))
 			factors[handle]=factor
 		self.factors = factors
 
