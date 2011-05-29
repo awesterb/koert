@@ -41,10 +41,11 @@ class Product:
 	@classmethod
 	def from_line(cls, line, boozedir):
 		if len(line)<1:
-			raise ValueError("product line is too small")
+			raise ValueError("product line is too small: '%s' " \
+					% (line,))
 		handle, name = line[0:2]
 		factors = {}
-		for i in xrange(3,len(line)):
+		for i in xrange(2,len(line)):
 			field = line[i].strip()
 			if field=="":
 				break
@@ -60,6 +61,9 @@ class Product:
 			if factor in factors:
 				raise ValueError("factor occurs twice")
 			factors[factor] = amount
+		if len(factors)==0:
+			raise MildErr("product %s (%s) has no factors" 
+					% (handle, name))
 		return cls(handle=handle, name=name, 
 				factors=Count(factors, int))
 
@@ -296,6 +300,7 @@ class Event:
 		self.date = date
 		self.barforms = {}
 		self.btc = None
+		self.deliv = None
 
 	def __str__(self):
 		return "@"+("unspecified-time"
@@ -313,6 +318,10 @@ class Event:
 			raise MildErr("double registration")
 		self.btc= btc
 
+	def register_deliv(self, deliv):
+		if self.deliv != None:
+			raise MildErr("double registration of delivery")
+		self.deliv = deliv
 	
 	@property
 	def shifts(self):
@@ -340,8 +349,11 @@ class EventDir:
 
 	@classmethod
 	def _load_btc_from_array(cls, ar, boozedir):
-		if len(ar)==0 or len(ar[0])==0 or ar[0][0].lower()!="tap":
-			raise MildErr("beertankcount.csv has faulty header")
+		if len(ar)==0:
+			raise MildErr("beertankcount.csv has no header")
+		if len(ar[0])==0 or ar[0][0].lower()!="tap":
+			raise MildErr("beertankcount.csv has faulty header: "
+					"%s" % ar[0])
 		count = Count.from_array(ar[1:], boozedir.eventdir,int)
 		for event in count.countlets.iterkeys():
 			event.register_btc(count[event])
@@ -404,9 +416,9 @@ class PriceListDir:
 
 
 class Deliv:
-	def __init__(self, code, date, description, count):
+	def __init__(self, code, event, description, count):
 		self.code = code
-		self.date = date
+		self.event = event
 		self.description = description
 		self.count = count
 	
@@ -424,15 +436,17 @@ class Deliv:
 			raise MildErr("header is too small")
 		header = ar[1]
 		try:
-			pricelist = boozedir.pricelistdir[header[0]]
+			pricelist = boozedir.pricelistdir[header[0].strip()]
 		except ObjDirErr:
 			raise MildErr("could not find pricelist")
 		date = parse_date(header[1])
-		description = header[2].strip().lower() if len(header>=3) \
+		event = boozedir.eventdir[date]
+		description = header[2].strip().lower() if len(header)>=3 \
 				else None
 		view = boozedir.commoditydir.get_view(pricelist)
 		count = Count.from_array(ar[2:], view, int)
-		return cls(code, date, description, count)
+		return cls(code, event, description, count)
+		
 
 
 class DelivDir:
@@ -449,6 +463,7 @@ class DelivDir:
 				continue
 			try:
 				d = self._load_deliv(fn, comps)
+				d.event.register_deliv(d)
 			except MildErr as me:
 				warn("failed to load delivery '%s': %s" \
 						% (fn, me))
