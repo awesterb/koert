@@ -73,6 +73,13 @@ class Product:
 	def __hash__(self):
 		return hash(self.handle)^hash(self.name)
 
+	@property
+	def beertank(self):
+		for f in self.factors:
+			if f.handle == BoozeDir.btfactorhandle:
+				return self.factors[f]
+		return self.factors.constr(0)
+
 # We often ignore the following errors
 class MildErr(Exception):
 	pass
@@ -160,6 +167,9 @@ class Count:
 
 	def __contains__(self, item):
 		return item in self.countlets
+
+	def __iter__(self):
+		return iter(self.countlets)
 
 	def __repr__(self):
 		return "\n".join(["%s: %s" % (obj, amount) for 
@@ -267,6 +277,17 @@ class BarForm:
 	def date(self):
 		return self.event.date
 
+	# the amount of beer from the beertank counted
+	@property
+	def beertank(self):
+		amount = 0
+		for com in self.sell_count:
+			pbt = com.product.beertank
+			if pbt==0:
+				continue
+			amount += pbt * self.sell_count[com]
+		return amount
+
 
 class BarFormDir:
 	def __init__(self, path, boozedir):
@@ -313,6 +334,9 @@ class Event:
 		self.btc = None
 		self.delivs = set()
 		self.bt_deliv = None
+		self._beertank_event = None
+		self._beertank_turfed = None
+		self._beertank_used = None
 
 	def __str__(self):
 		return "@"+("unspecified-time"
@@ -332,7 +356,7 @@ class Event:
 
 	def register_deliv(self, deliv):
 		self.delivs.add(deliv)
-		if deliv.beertank!=None:
+		if deliv.beertank!=0:
 			if self.bt_deliv!=None:
 				raise MildErr("double registration of "
 						"beertank delivery")
@@ -341,6 +365,30 @@ class Event:
 	@property
 	def shifts(self):
 		return tuple(self.barforms.iterkeys())
+
+	@property
+	def beertank_turfed(self):
+		if self._beertank_turfed==None:
+			self._beertank_turfed = sum([bf.beertank 
+				for bf in self.barforms.itervalues()])
+		return self._beertank_turfed
+
+	# returns the amount of bt-factors delivered to the beertank
+	# during the event, or, if this is not available,
+	# the amount read from the beertank display.
+	@property
+	def beertank_used(self):
+		if self._beertank_used==None:
+			self._beertank_used = self.bt_deliv.beertank \
+				if self.bt_deliv!=None \
+				else (self.btc if self.btc!=None else None)
+		return self._beertank_used
+
+	# returns whether this event used the beertank, 
+	# like the monday socials.
+	@property
+	def beertank_activity(self):
+		return self.beertank_used>0
 
 
 class EventDir:
@@ -441,13 +489,14 @@ class Deliv:
 	@property
 	def beertank(self):
 		if self._beertank==None:
-			amount = None
+			amount = 0
 			for com in self.count.countlets.keys():
-				if com.product.handle \
-						== BoozeDir.btdelivprodname:
-					amount = self.count[com]
-			self._beertank = (amount,)
-		return self._beertank[0]
+				pbt = com.product.beertank
+				if pbt==0:
+					continue
+				amount += self.count[com]*pbt
+			self._beertank = amount
+		return self._beertank
 	
 
 	@classmethod
@@ -566,7 +615,7 @@ class CommodityView:
 
 class BoozeDir:
 	# to compare to the beertankcounts
-	btdelivprodname = "bav"
+	btfactorhandle = "bav_tank"
 
 	def __init__(self, path):
 		self.eventdir = EventDir()

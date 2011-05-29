@@ -6,27 +6,40 @@ class EventReport:
 		self.boozedir = boozedir
 	
 	def generate(self):
-		return itertools.chain(self._generate_shifts(),
-				self._generate_beertankcount())
+		return itertools.chain(self._check_shifts(),
+				self._compare_deliv_with_btcs(),
+				self._compare_bt_used_with_turfed())
 
-	def _generate_beertankcount(self):
+	def _compare_deliv_with_btcs(self):
 		e = self.event
 		if e.bt_deliv==None and e.btc==None:
 			return
 		if e.bt_deliv==None:
-			yield "a beertank count (thus borrel)" \
-				", but no delivery"
+			yield "no delivery"
 			return
 		if e.btc==None:
-			yield "a delivery, but no beertank count"
+			yield "no beertank count"
 			return
 		mls = e.bt_deliv.beertank
 		if mls!=e.btc:
 			yield "delivered beer and beertankcount do"\
 					" not coincide: btc=%sml  "\
 					"deliv=%sml" % (e.btc, mls)
+	
+	def _compare_bt_used_with_turfed(self):
+		u = self.event.beertank_used
+		if u==None:
+			return
+		c = self.event.beertank_turfed
+		if c==0:
+			yield "no beertank use turfed"
+			return
+		if u!=c:
+			yield "the beertank count and turfed use do" \
+					" not coincide: " \
+					" used=%s, turfed=%s" % (u,c)
 
-	def _generate_shifts(self):
+	def _check_shifts(self):
 		shifts = self.event.shifts
 		for shift in shifts:
 			if shift==None:
