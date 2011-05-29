@@ -1,10 +1,32 @@
+import itertools
+
 class EventReport:
 	def __init__(self, event, boozedir):
 		self.event = event
 		self.boozedir = boozedir
 	
 	def generate(self):
-		lines = []
+		return itertools.chain(self._generate_shifts(),
+				self._generate_beertankcount())
+
+	def _generate_beertankcount(self):
+		e = self.event
+		if e.bt_deliv==None and e.btc==None:
+			return
+		if e.bt_deliv==None:
+			yield "a beertank count (thus borrel)" \
+				", but no delivery"
+			return
+		if e.btc==None:
+			yield "a delivery, but no beertank count"
+			return
+		mls = e.bt_deliv.beertank
+		if mls!=e.btc:
+			yield "delivered beer and beertankcount do"\
+					" not coincide: btc=%sml  "\
+					"deliv=%sml" % (e.btc, mls)
+
+	def _generate_shifts(self):
 		shifts = self.event.shifts
 		for shift in shifts:
 			if shift==None:
@@ -22,7 +44,6 @@ class EventReport:
 				i += 1
 				continue
 			yield "missing barform for shift #%s" % j
-		
 			
 	def _on_None_shift(self):
 		bf = self.event.barforms[None]

@@ -158,6 +158,9 @@ class Count:
 	def __getitem__(self, item):
 		return self.countlets[item]
 
+	def __contains__(self, item):
+		return item in self.countlets
+
 	def __repr__(self):
 		return "\n".join(["%s: %s" % (obj, amount) for 
 			obj, amount in self.countlets.iteritems()])
@@ -308,7 +311,8 @@ class Event:
 		self.date = date
 		self.barforms = {}
 		self.btc = None
-		self.deliv = None
+		self.delivs = set()
+		self.bt_deliv = None
 
 	def __str__(self):
 		return "@"+("unspecified-time"
@@ -327,9 +331,12 @@ class Event:
 		self.btc= btc
 
 	def register_deliv(self, deliv):
-		if self.deliv != None:
-			raise MildErr("double registration of delivery")
-		self.deliv = deliv
+		self.delivs.add(deliv)
+		if deliv.beertank!=None:
+			if self.bt_deliv!=None:
+				raise MildErr("double registration of "
+						"beertank delivery")
+			self.bt_deliv = deliv
 	
 	@property
 	def shifts(self):
@@ -429,10 +436,24 @@ class Deliv:
 		self.event = event
 		self.description = description
 		self.count = count
+		self._beertank = None
+
+	@property
+	def beertank(self):
+		if self._beertank==None:
+			amount = None
+			for com in self.count.countlets.keys():
+				if com.product.handle \
+						== BoozeDir.btdelivprodname:
+					amount = self.count[com]
+			self._beertank = (amount,)
+		return self._beertank[0]
 	
+
 	@classmethod
 	def from_path(cls, path, code, boozedir):
 		return cls.from_array(open_rikf_ar(path), code, boozedir)
+
 
 	@classmethod
 	def from_array(cls, ar, code, boozedir):
@@ -544,6 +565,9 @@ class CommodityView:
 
 
 class BoozeDir:
+	# to compare to the beertankcounts
+	btdelivprodname = "bav"
+
 	def __init__(self, path):
 		self.eventdir = EventDir()
 		self.beertankcount = \
@@ -560,6 +584,7 @@ class BoozeDir:
 			"barforms"), self)
 		self.delivdir = DelivDir(ospath.join(path, 
 			"deliverance"), self)
+
 
 	@classmethod
 	def processFn(cls, fn):
