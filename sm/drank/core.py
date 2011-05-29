@@ -159,8 +159,6 @@ class Count:
 			try:
 				obj, amount = cls.countlet_from_line(line, 
 						objdir, constr)
-			except ObjDirErr:
-				continue
 			except NoObjStrErr:
 				continue
 			if obj in countlets:
