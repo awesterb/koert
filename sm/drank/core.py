@@ -58,7 +58,8 @@ class Product:
 			if factor in factors:
 				raise ValueError("factor occurs twice")
 			factors[factor] = amount
-		return cls(handle=handle, name=name, factors=Count(factors))
+		return cls(handle=handle, name=name, 
+				factors=Count(factors, int))
 
 	def __repr__(self):
 		return self.name
@@ -132,10 +133,13 @@ class FactorDir:
 		return name in self.factors
 
 class Count:
-	def __init__(self, countlets):
+	def __init__(self, countlets, constr):
 		self.countlets = countlets
+		self.constr = constr
 	
-	zero = None
+	@classmethod
+	def zero(cls, constr):
+		return Count({}, constr)
 	
 	def __getitem__(self, item):
 		return self.countlets[item]
@@ -145,14 +149,14 @@ class Count:
 			obj, amount in self.countlets.iteritems()])
 
 	@classmethod
-	def from_array(cls, ar, objdir):
+	def from_array(cls, ar, objdir, constr):
 		countlets = {}
 		for line in ar:
 			if len(line)==0:
 				continue
 			try:
 				obj, amount = cls.countlet_from_line(line, 
-						objdir)
+						objdir, constr)
 			except ObjDirErr:
 				continue
 			except NoObjStrErr:
@@ -162,10 +166,10 @@ class Count:
 						"(amount: %s)"
 						% (obj, amount))
 			countlets[obj] = amount
-		return cls(countlets=countlets)
+		return cls(countlets=countlets, constr=constr)
 	
 	@classmethod
-	def countlet_from_line(cls, line, objdir):
+	def countlet_from_line(cls, line, objdir, constr):
 		if len(line)==0:
 			raise ValueError("no object given")
 		obj_str = line[0].strip()
@@ -179,7 +183,7 @@ class Count:
 			amount_str = line[1].strip()
 			try:
 				amount = 0 if amount_str=="" \
-						else int(amount_str)
+						else constr(amount_str)
 			except ValueError:
 				raise MildErr("could not parse amount: '%s'" \
 						% amount_str)
@@ -190,19 +194,16 @@ class Count:
 		for a in (self, other):
 			for obj in a.countlets.iterkeys():
 				if obj not in countlets:
-					countlets[obj] = 0
+					countlets[obj] = self.constr(0)
 				countlets[obj] += a[obj]
-		return Count(countlets=countlets)
+		return Count(countlets=countlets, constr=self.constr)
 	
 	def __neg__(self):
 		countlets = {}
 		for obj in self.countlets.iterkeys():
 			countlets[obj] = -self.countlets[obj]
-		return Count(countlets)
+		return Count(countlets, self.constr)
 	
-	
-
-Count.zero = Count(countlets={})
 
 class BarForm:
 	def __init__(self, event, counter, shift, sell_count, 
@@ -240,7 +241,7 @@ class BarForm:
 		endbal = Decimal(header[5])
 		# below, to translate "product@pricelist" to a commodity
 		commodity_view = boozedir.commoditydir.get_view(pricelist)
-		sell_count = Count.from_array(ar[2:], commodity_view)
+		sell_count = Count.from_array(ar[2:], commodity_view, int)
 		event = boozedir.eventdir[date]
 		return cls(event=event, counter=counter, shift=shift,
 				startbal=startbal, endbal=endbal,
@@ -265,7 +266,7 @@ class BarFormDir:
 		if self._total_sold==None:
 			self._total_sold = sum([bf.sell_count 
 				for bf in self.barforms.itervalues()],
-				Count.zero)
+				Count.zero(int))
 		return self._total_sold
 	
 	def _load_barforms(self):
@@ -280,6 +281,7 @@ class BarFormDir:
 			except MildErr as me:
 				warn(("failed to load barform '%s': %s") \
 						% (fn, me))
+				continue
 			self.barforms[bf.number] = bf
 
 	def _load_barform(self, fn, comps):
@@ -340,7 +342,7 @@ class EventDir:
 	def _load_btc_from_array(cls, ar, boozedir):
 		if len(ar)==0 or len(ar[0])==0 or ar[0][0].lower()!="tap":
 			raise MildErr("beertankcount.csv has faulty header")
-		count = Count.from_array(ar[1:], boozedir.eventdir)
+		count = Count.from_array(ar[1:], boozedir.eventdir,int)
 		for event in count.countlets.iterkeys():
 			event.register_btc(count[event])
 		return count
@@ -362,7 +364,7 @@ class PriceList:
 		if len(ar)==0 or len(ar[0])==0 or \
 				ar[0][0].lower()!="prijslijst":
 			raise MildErr("Missing 'prijslijst' title")
-		prices = Count.from_array(ar[1:], boozedir.productdir)
+		prices = Count.from_array(ar[1:], boozedir.productdir,Decimal)
 		return cls(name=name,prices=prices)
 
 class PriceListDir:
@@ -429,7 +431,7 @@ class Deliv:
 		description = header[2].strip().lower() if len(header>=3) \
 				else None
 		view = boozedir.commoditydir.get_view(pricelist)
-		count = Count.from_array(ar[2:], view)
+		count = Count.from_array(ar[2:], view, int)
 		return cls(code, date, description, count)
 
 
