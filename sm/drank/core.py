@@ -93,10 +93,17 @@ class ProductDir:
 		self.path = path
 		ar = open_rikf_ar(path)
 		for line in ar:
-			product = Product.from_line(line, self.boozedir)
+			try:
+				product = Product.from_line(line, self.boozedir)
+			except MildErr:
+				warn("Failed to load product from line: %s" 
+						% (line,))
+				continue
 			handle = product.handle
 			if handle in products:
-				raise ValueError("product name appears twice")
+				warn("product handle appears"
+						"twice: %s" % handle)
+				continue
 			products[handle]=product
 		self.products = products
 
