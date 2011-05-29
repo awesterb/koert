@@ -51,7 +51,9 @@ class Product:
 			comps = field.split(":")
 			if(len(comps)!=2):
 				raise ValueError("error in factor multiple's"
-						" formatting")
+						" formatting; components: "
+						" %s " % (comps,) + "; "
+						"did you forget a colon?")
 			amount_str, factor_name = comps
 			amount = int(amount_str)
 			factor = boozedir.factordir[factor_name]
