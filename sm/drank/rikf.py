@@ -23,9 +23,8 @@ def open_rikf_ar(p):
 
 def comment_stripper(f):
 	for line in f:
-		if len(line)==0:
-			yield line
+		decom = line.split("#",1)[0].strip()
+		if len(decom)==0:
 			continue
-		if line[0]=="#":
-			continue
-		yield line
+		yield decom
+		
