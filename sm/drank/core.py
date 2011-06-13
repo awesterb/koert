@@ -119,7 +119,7 @@ class ProductDir:
 
 	def __getitem__(self, name):
 		if name not in self.products:
-			warn("Unknown product: %s" % name)
+			warn("Unknown product: '%s'" % name)
 			raise ObjDirErr()
 		return self.products[name]
 	
@@ -186,6 +186,9 @@ class Count:
 						objdir, constr)
 			except NoObjStrErr:
 				continue
+			## to get errors on all missing products
+			#except ObjDirErr:
+			#	continue
 			if obj in countlets:
 				raise MildErr("obj appears twice: '%s'"
 						"(amount: %s)"
