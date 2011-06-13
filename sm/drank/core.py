@@ -203,7 +203,7 @@ class Count:
 		obj_str = line[0].strip()
 		if(obj_str==""):
 			raise NoObjStrErr()
-		obj = objdir[line[0]]
+		obj = objdir[obj_str]
 		amount = None
 		if len(line)==1:
 			amount = 0
