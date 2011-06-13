@@ -68,7 +68,7 @@ class Product:
 				factors=Count(factors, int))
 
 	def __repr__(self):
-		return self.name
+		return self.handle
 
 	def __hash__(self):
 		return hash(self.handle)^hash(self.name)
@@ -431,7 +431,10 @@ class PriceList:
 	def __init__(self, name, prices):
 		self.prices = prices
 		self.name = name
-	
+
+	def __repr__(self):
+		return self.name
+
 	@classmethod
 	def from_path(cls, path, name, boozedir):
 		ar = open_rikf_ar(path)
@@ -444,6 +447,7 @@ class PriceList:
 			raise MildErr("Missing 'prijslijst' title")
 		prices = Count.from_array(ar[1:], boozedir.productdir,Decimal)
 		return cls(name=name,prices=prices)
+
 
 class PriceListDir:
 	def __init__(self, path, boozedir):
@@ -574,6 +578,9 @@ class Commodity:
 	
 	def __hash__(self):
 		return hash(self.product) ^ hash(self.pricelist)
+
+	def __repr__(self):
+		return "%s@%s" % (self.product, self.pricelist)
 
 
 class CommodityDir:
