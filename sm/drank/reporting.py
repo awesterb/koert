@@ -49,8 +49,10 @@ class EventReport:
 				continue
 			if shift not in (1,2,3):
 				yield "shiftnumber of barform #%s is not "  \
-					"1, 2 or 3" % (bf.number,)
-		i,j=0,0
+					"1, 2 or 3" % (shift,)
+		i=0
+		j= (min([s for s in self.event.shifts if s!=None]) \
+				if len(self.event.shifts)>0 else 0) -1
 		while i<len(self.event.shifts) - (
 				1 if None in self.event.shifts else 0):
 			j += 1
