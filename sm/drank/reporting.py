@@ -8,7 +8,8 @@ class EventReport:
 	def generate(self):
 		return itertools.chain(self._check_shifts(),
 				self._compare_deliv_with_btcs(),
-				self._compare_bt_used_with_turfed())
+				self._compare_bt_used_with_turfed(),
+				self._check_shifts_bal())
 
 	def _compare_deliv_with_btcs(self):
 		e = self.event
@@ -63,5 +64,7 @@ class EventReport:
 		yield "barform #%s of %s signed by %s has no shift number" % (
 				bf.number, bf.date, bf.counter)
 	
-				
-
+	def _check_shifts_bal(self):
+		shifts = self.event.shifts
+		for i in xrange(len(shifts)):
+			print shifts[i]

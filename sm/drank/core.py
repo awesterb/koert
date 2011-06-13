@@ -250,9 +250,9 @@ class BarForm:
 	@classmethod
 	def from_array(cls, ar, number, boozedir):
 		if len(ar)==0 or len(ar[0])==0 or ar[0][0].lower()!="bar":
-			raise ValueError("Missing 'bar' title")
+			raise MildErr("Missing 'bar' title")
 		if len(ar)==1 or len(ar[1])<6:
-			raise ValueError("Incomplete/missing header")
+			raise MildErr("Incomplete/missing header")
 		# header:
 		#   pricelist; date ; counter ; shift# ; startbal ; endbal
 		header = ar[1]
