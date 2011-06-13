@@ -65,6 +65,16 @@ class EventReport:
 				bf.number, bf.date, bf.counter)
 	
 	def _check_shifts_bal(self):
-		shifts = self.event.shifts
-		for i in xrange(len(shifts)):
-			print shifts[i]
+		event = self.event
+		shifts = event.shifts
+		barforms = event.barforms
+		for i in shifts:
+			if i+1 not in shifts:
+				continue
+			eb = barforms[i].endbal
+			sb = barforms[i+1].startbal
+			if eb!=sb:
+				yield "ending balance of shift #%s differs"\
+						" from starting balance of the"\
+						" following shift: %s and %s"\
+						% (i, eb, sb)
