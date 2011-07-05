@@ -583,7 +583,7 @@ class Deliv:
 			raise MildErr("no title")
 		if ar[0][0].strip().lower()!="levering":
 			raise MildErr("title is not 'levering'")
-		if len(ar)==1 or len(ar[1])<=2:
+		if len(ar)==1 or len(ar[1])<2:
 			raise MildErr("header is too small")
 		header = ar[1]
 		try:
