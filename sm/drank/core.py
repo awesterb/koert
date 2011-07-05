@@ -9,7 +9,8 @@ def parse_date(date_str):
 	if date_str=="":
 		date = None
 	else:
-		year, month, day = map(int, date_str.split("-"))
+		a,b,c = map(int, date_str.split("-"))
+		year, month, day = (a,b,c) if a>100 else (c,b,a)
 		date = datetime.date(year, month, day)
 	return date
 
