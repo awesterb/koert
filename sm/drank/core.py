@@ -336,6 +336,7 @@ class Event:
 		self.barforms = {}
 		self.btc = None
 		self.delivs = set()
+		self.invcounts = set()
 		self.bt_deliv = None
 		self._beertank_event = None
 		self._beertank_turfed = None
@@ -364,6 +365,9 @@ class Event:
 				raise MildErr("double registration of "
 						"beertank delivery")
 			self.bt_deliv = deliv
+	
+	def register_invcount(self, ic):
+		self.invcounts.add(ic)
 	
 	@property
 	def shifts(self):
@@ -485,6 +489,68 @@ class PriceListDir:
 		return self.pricelists[name]
 
 
+class InvCount:
+	def __init__(self, code, event, count):
+		self.code = code
+		self.event = event
+		self.count = count
+	
+	@classmethod
+	def from_path(cls, path, code, boozedir):
+		return cls.from_array(open_rikf_ar(path), code, boozedir)
+
+
+	@classmethod
+	def from_array(cls, ar, code, boozedir):
+		if len(ar)==0 or len(ar[0])==0:
+			raise MildErr("no title")
+		if ar[0][0].strip().lower()!="voorraadtelling":
+			raise MildErr("title is not 'voorraadtelling'")
+		if len(ar)==1 or len(ar[1])==0:
+			raise MildErr("header is too small")
+		header = ar[1]
+		date = parse_date(header[0])
+		event = boozedir.eventdir[date]
+		count = Count.from_array(ar[2:], boozedir.productdir, int)
+		return cls(code, event, count)
+
+
+class InvCountDir:
+	def __init__(self, path, boozedir):
+		self.invcounts = {}
+		self.boozedir = boozedir
+		self.path = path
+		self._load_invcounts()
+	
+	def _load_invcounts(self):
+		for fn in listdir(self.path):
+			comps, ignore = BoozeDir.processFn(fn)
+			if ignore:
+				continue
+			try:
+				ic = self._load_invcount(fn, comps)
+				ic.event.register_invcount(ic)
+			except MildErr as me:
+				warn("failed to load inventory count '%s'"\
+						% (fn,))
+				continue
+			self.invcounts[ic.code] = ic
+	
+	def _load_invcount(self, fn, comps):
+		path = ospath.join(self.path, fn)
+		code = ".".join(comps[0:-1])
+		if code in self.invcounts:
+			raise MildErr("inventory count with this "
+					"name already exists.")
+		return InvCount.from_path(path, code, self.boozedir)
+
+	def __getitem__(self, code):
+		if code not in self.invcounts:
+			warn("Unknown inventory count: %s" % code)
+			raise ObjDirErr()
+		return self.invcounts[code]
+	
+
 class Deliv:
 	def __init__(self, code, event, description, count):
 		self.code = code
@@ -532,6 +598,7 @@ class Deliv:
 		count = Count.from_array(ar[2:], view, int)
 		return cls(code, event, description, count)
 		
+
 
 
 class DelivDir:
@@ -636,6 +703,8 @@ class BoozeDir:
 			"factor_catalog.csv"))
 		self.productdir = ProductDir(ospath.join(path, 
 			"product_catalog.csv"), self)
+		self.invcountdir = InvCountDir(ospath.join(path,
+			"inventory"), self)
 		self.pricelistdir = PriceListDir(ospath.join(path,
 			"pricelists"), self)
 		self.commoditydir = CommodityDir(self)
