@@ -249,6 +249,18 @@ class Account(GcObj):
 	def mutations(self):
 		return self._mutations
 
+	def get_descendants(self):
+		todo = [self]
+		while len(todo)>0:
+			desc = todo.pop()
+			todo.extend(desc.children.itervalues())
+			yield desc
+
+	def get_descendants_mutations(self):
+		for desc in self.get_descendants():
+			for mut in desc.mutations:
+				yield mut
+
 	@property
 	def nice_id(self):
 		return self.path	
