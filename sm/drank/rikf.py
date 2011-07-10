@@ -9,8 +9,21 @@ class yaExcelDialect(csv.Dialect):
 	quoting = csv.QUOTE_MINIMAL
 
 def read_rikf(f):
-	return csv.reader(comment_stripper(f), 
-			dialect = yaExcelDialect)
+	for line in csv.reader(comment_stripper(f), 
+			dialect = yaExcelDialect):
+		line = strip_line(line)
+		if line==None:
+			continue
+		yield line
+
+def strip_line(line):
+	line = map(lambda s: s.strip(), line)
+	i = len(line)
+	while i>0 and line[i-1]=="":
+		i -= 1
+	if i==0:
+		return None
+	return line[:i]
 
 def open_rikf_ar(p):
 	with open(p) as f:

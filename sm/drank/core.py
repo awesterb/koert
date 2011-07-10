@@ -59,7 +59,7 @@ class Product:
 		handle, name = line[0:2]
 		factors = {}
 		for i in xrange(2,len(line)):
-			field = line[i].strip()
+			field = line[i]
 			if field=="":
 				break
 			comps = field.split(":")
@@ -213,7 +213,7 @@ class Count:
 	def countlet_from_line(cls, line, objdir, constr):
 		if len(line)==0:
 			raise ValueError("no object given")
-		obj_str = line[0].strip()
+		obj_str = line[0]
 		if(obj_str==""):
 			raise NoObjStrErr()
 		obj = objdir[obj_str]
@@ -221,7 +221,7 @@ class Count:
 		if len(line)==1:
 			amount = 0
 		else:
-			amount_str = line[1].strip()
+			amount_str = line[1]
 			try:
 				amount = 0 if amount_str=="" \
 						else constr(amount_str)
@@ -272,11 +272,11 @@ class BarForm:
 		# header:
 		#   pricelist; date ; counter ; shift# ; startbal ; endbal
 		header = ar[1]
-		pricelist_str = header[0].strip()
+		pricelist_str = header[0]
 		pricelist = boozedir.pricelistdir[pricelist_str]
-		date = parse_date(header[1].strip())
+		date = parse_date(header[1])
 		counter = header[2]
-		shift_str = header[3].strip()
+		shift_str = header[3]
 		shift = parse_int(header[3]) if shift_str!="" else None
 		startbal = parse_decimal(header[4])
 		endbal = parse_decimal(header[5])
@@ -520,7 +520,7 @@ class InvCount:
 	def from_array(cls, ar, code, boozedir):
 		if len(ar)==0 or len(ar[0])==0:
 			raise MildErr("no title")
-		if ar[0][0].strip().lower()!="voorraadtelling":
+		if ar[0][0].lower()!="voorraadtelling":
 			raise MildErr("title is not 'voorraadtelling'")
 		if len(ar)==1 or len(ar[1])==0:
 			raise MildErr("header is too small")
@@ -598,18 +598,18 @@ class Deliv:
 	def from_array(cls, ar, code, boozedir):
 		if len(ar)==0 or len(ar[0])==0:
 			raise MildErr("no title")
-		if ar[0][0].strip().lower()!="levering":
+		if ar[0][0].lower()!="levering":
 			raise MildErr("title is not 'levering'")
 		if len(ar)==1 or len(ar[1])<2:
 			raise MildErr("header is too small")
 		header = ar[1]
 		try:
-			pricelist = boozedir.pricelistdir[header[0].strip()]
+			pricelist = boozedir.pricelistdir[header[0]]
 		except ObjDirErr:
 			raise MildErr("could not find pricelist")
 		date = parse_date(header[1])
 		event = boozedir.eventdir[date]
-		description = header[2].strip().lower() if len(header)>=3 \
+		description = header[2].lower() if len(header)>=3 \
 				else None
 		view = boozedir.commoditydir.get_view(pricelist)
 		count = Count.from_array(ar[2:], view, parse_int)
