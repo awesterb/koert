@@ -325,6 +325,8 @@ class BarFormDir:
 	def _load_barforms(self):
 		self.barforms = {}
 		for fn in listdir(self.path):
+			if not ospath.isfile(ospath.join(self.path, fn)):
+				continue
 			comps, ignore = BoozeDir.processFn(fn)
 			if ignore:
 				continue
