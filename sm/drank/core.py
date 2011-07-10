@@ -12,6 +12,9 @@ def parse_int(s):
 		raise MildErr("failed to parse int: %s" % (v,))
 
 def parse_decimal(s):
+	s = s.strip()
+	if s=='onbekend':
+		return None
 	try:
 		return decimal.Decimal(s)
 	except decimal.InvalidOperation as e:
