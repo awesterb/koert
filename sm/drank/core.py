@@ -1,15 +1,27 @@
 import datetime
 from os import listdir, path as ospath
-from decimal import Decimal
+import decimal
 from rikf import open_rikf_ar
 from warnings import warn
 
+
+def parse_int(s):
+	try:
+		return int(s)
+	except ValueError as v:
+		raise MildErr("failed to parse int: %s" % (v,))
+
+def parse_decimal(s):
+	try:
+		return decimal.Decimal(s)
+	except decimal.InvalidOperation as e:
+		raise MildErr("failed to parse decimal: %s" % (e,))
 
 def parse_date(date_str):
 	if date_str=="":
 		date = None
 	else:
-		a,b,c = map(int, date_str.split("-"))
+		a,b,c = map(parse_int, date_str.split("-"))
 		year, month, day = (a,b,c) if a>100 else (c,b,a)
 		date = datetime.date(year, month, day)
 	return date
@@ -57,7 +69,7 @@ class Product:
 						" %s " % (comps,) + "; "
 						"did you forget a colon?")
 			amount_str, factor_name = comps
-			amount = int(amount_str)
+			amount = parse_int(amount_str)
 			factor = boozedir.factordir[factor_name]
 			if factor in factors:
 				raise ValueError("factor occurs twice")
@@ -66,7 +78,7 @@ class Product:
 			raise MildErr("product %s (%s) has no factors" 
 					% (handle, name))
 		return cls(handle=handle, name=name, 
-				factors=Count(factors, int))
+				factors=Count(factors, parse_int))
 
 	def __repr__(self):
 		return self.handle
@@ -265,12 +277,13 @@ class BarForm:
 		date = parse_date(header[1].strip())
 		counter = header[2]
 		shift_str = header[3].strip()
-		shift = int(header[3]) if shift_str!="" else None
-		startbal = Decimal(header[4])
-		endbal = Decimal(header[5])
+		shift = parse_int(header[3]) if shift_str!="" else None
+		startbal = parse_decimal(header[4])
+		endbal = parse_decimal(header[5])
 		# below, to translate "product@pricelist" to a commodity
 		commodity_view = boozedir.commoditydir.get_view(pricelist)
-		sell_count = Count.from_array(ar[2:], commodity_view, int)
+		sell_count = Count.from_array(ar[2:], commodity_view, 
+				parse_int)
 		event = boozedir.eventdir[date]
 		return cls(event=event, counter=counter, shift=shift,
 				startbal=startbal, endbal=endbal,
@@ -306,7 +319,7 @@ class BarFormDir:
 		if self._total_sold==None:
 			self._total_sold = sum([bf.sell_count 
 				for bf in self.barforms.itervalues()],
-				Count.zero(int))
+				Count.zero(parse_int))
 		return self._total_sold
 	
 	def _load_barforms(self):
@@ -425,7 +438,8 @@ class EventDir:
 		if len(ar[0])==0 or ar[0][0].lower()!="tap":
 			raise MildErr("beertankcount.csv has faulty header: "
 					"%s" % ar[0])
-		count = Count.from_array(ar[1:], boozedir.eventdir,int)
+		count = Count.from_array(ar[1:], boozedir.eventdir,
+				parse_int)
 		for event in count.countlets.iterkeys():
 			event.register_btc(count[event])
 		return count
@@ -450,7 +464,8 @@ class PriceList:
 		if len(ar)==0 or len(ar[0])==0 or \
 				ar[0][0].lower()!="prijslijst":
 			raise MildErr("Missing 'prijslijst' title")
-		prices = Count.from_array(ar[1:], boozedir.productdir,Decimal)
+		prices = Count.from_array(ar[1:], boozedir.productdir,
+				parse_decimal)
 		return cls(name=name,prices=prices)
 
 
@@ -512,7 +527,8 @@ class InvCount:
 		header = ar[1]
 		date = parse_date(header[0])
 		event = boozedir.eventdir[date]
-		count = Count.from_array(ar[2:], boozedir.productdir, int)
+		count = Count.from_array(ar[2:], boozedir.productdir, 
+				parse_int)
 		return cls(code, event, count)
 
 
@@ -596,7 +612,7 @@ class Deliv:
 		description = header[2].strip().lower() if len(header)>=3 \
 				else None
 		view = boozedir.commoditydir.get_view(pricelist)
-		count = Count.from_array(ar[2:], view, int)
+		count = Count.from_array(ar[2:], view, parse_int)
 		return cls(code, event, description, count)
 		
 
