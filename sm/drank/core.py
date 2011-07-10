@@ -200,8 +200,8 @@ class Count:
 			except NoObjStrErr:
 				continue
 			## to get errors on all missing products
-			#except ObjDirErr:
-			#	continue
+			except ObjDirErr:
+				continue
 			if obj in countlets:
 				raise MildErr("obj appears twice: '%s'"
 						"(amount: %s)"
