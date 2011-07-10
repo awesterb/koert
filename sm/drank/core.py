@@ -741,7 +741,7 @@ class BoozeDir:
 		if len(comps)>1:
 			if comps[-1][-1]=="~" or comps[-1][-1]=="swp":
 				return comps, True
-			if comps[0]=='template':
+			if comps[0] in ('template','example'):
 				return comps, True
 		return comps, False
 
