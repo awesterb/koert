@@ -533,7 +533,7 @@ class InvCount:
 		date = parse_date(header[0])
 		event = boozedir.eventdir[date]
 		count = Count.from_array(ar[2:], boozedir.productdir, 
-				parse_int)
+				parse_decimal)
 		return cls(code, event, count)
 
 
@@ -553,8 +553,8 @@ class InvCountDir:
 				ic = self._load_invcount(fn, comps)
 				ic.event.register_invcount(ic)
 			except MildErr as me:
-				warn("failed to load inventory count '%s'"\
-						% (fn,))
+				warn("failed to load inventory count '%s': %s"\
+						% (fn,me))
 				continue
 			self.invcounts[ic.code] = ic
 	
