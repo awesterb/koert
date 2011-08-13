@@ -174,6 +174,10 @@ class Count:
 		self.countlets = countlets
 		self.constr = constr
 	
+	def total(self, f=lambda x:x, zero=0):
+		return sum([f(obj) * self.countlets[obj] 
+			for obj in self.countlets], zero)
+	
 	@classmethod
 	def zero(cls, constr):
 		return Count({}, constr)
@@ -459,6 +463,9 @@ class PriceList:
 	def __repr__(self):
 		return self.name
 
+	def __getitem__(self, obj):
+		return self.prices[obj]
+
 	@classmethod
 	def from_path(cls, path, name, boozedir):
 		ar = open_rikf_ar(path)
@@ -582,6 +589,10 @@ class Deliv:
 		self._beertank = None
 
 	@property
+	def price(self):
+		return self.count.total(lambda x: x.price)
+
+	@property
 	def beertank(self):
 		if self._beertank==None:
 			amount = 0
@@ -629,6 +640,7 @@ class DelivDir:
 		self.boozedir = boozedir
 		self.path = path
 		self._load_delivs()
+
 	
 	def _load_delivs(self):
 		for fn in listdir(self.path):
@@ -657,6 +669,9 @@ class DelivDir:
 			warn("Unknown delivery: %s" % code)
 			raise ObjDirErr()
 		return self.delivs[code]
+
+	def __iter__(self):
+		return iter(self.delivs.itervalues())
 	
 
 
@@ -664,6 +679,10 @@ class Commodity:
 	def __init__(self, product, pricelist):
 		self.product = product
 		self.pricelist = pricelist
+	
+	@property
+	def price(self):
+		return self.pricelist[self.product]
 	
 	def __hash__(self):
 		return hash(self.product) ^ hash(self.pricelist)
