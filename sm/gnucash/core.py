@@ -271,9 +271,11 @@ class Transaction(GcObj):
 		self._softrefs = tuple(Softref.from_text(self.description))
 
 	def __repr__(self):
-		return "<tr%s %s %s>" % (self.num if self.num else "", 
-				self.date_posted, 
-				repr(self.description))
+		if self.num:
+			return "tr"+self.num
+		else:
+			return "<tr %s %s>" % (self.date_posted,
+					repr(self.description))
 
 	@property
 	def splits(self):
