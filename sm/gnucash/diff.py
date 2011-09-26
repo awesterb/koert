@@ -89,19 +89,47 @@ def _DeepDiff(FP, succDiff, zeroDiff, isSucc, a, b):
 	if isSucc(a,b):
 		return succDiff(FP)(a,b)
 	return zeroDiff(a,b)
+
+class _DeepDiffCtx:
+	def __init__(self, succDiff, zeroDiff, isSucc):
+		self.succDiff = succDiff
+		self.zeroDiff = zeroDiff
+		self._succDiff_diff = succDiff(self.diff)
+		self.isSucc = isSucc
+	
+	def diff(self, a, b):
+		return self._succDiff_diff(a,b) if self.isSucc(a,b) \
+				else self.zeroDiff(a,b)
+
 def DeepDiff(succDiff, zeroDiff, isSucc):
-	FP = lambda a,b: _DeepDiff(FP, succDiff, zeroDiff, isSucc, a, b)
-	return FP
+	ctx = _DeepDiffCtx(succDiff, zeroDiff, isSucc)
+	return ctx.diff
 
 def DeepDictDiff(diff):
 	return DeepDiff(DictDiff, diff, 
 			lambda a,b: type(a)==dict and type(b)==dict)
 
+class _LutedDiffCtx:
+	def __init__(self, origDiff):
+		self.origDiff = origDiff
+		self.lut = dict()
+
+	def diff(self, a, b):
+		d = None
+		if (a,b) not in self.lut:
+			d = self.origDiff(a,b)
+			self.lut[(a,b)] = d
+		else:
+			d = self.lut[(a,b)]
+		return d
+
+def LutedDiff(diff):
+	return _LutedDiffCtx(diff).diff
 
 ###############################################################################
 
 def ShallowGcStructDiff(diff):
-	return lambda a,b: DeepDictDiff(diff)(a.fields, b.fields)
+	return LutedDiff(lambda a,b: DeepDictDiff(diff)(a.fields, b.fields))
 GcStructDiff = DeepDiff(ShallowGcStructDiff, EqDiff, 
 		lambda a,b: isinstance(a,GcStruct) and isinstance(b,GcStruct))
 
