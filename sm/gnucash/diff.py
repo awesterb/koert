@@ -29,7 +29,9 @@ class EqDiff:
 	def differ(self):
 		return self.difference[0] != self.difference[1]
 	def __repr__(self):
-		return "(inequal)"
+		if not self.differ:
+			return "(equal)"
+		return "(inequal: %s vs %s)" % tuple(map(repr,self.difference))
 
 class InDiff:
 	def __init__(self,a,b):
@@ -64,9 +66,9 @@ class DiffitObj:
 	def repr_diff(self, t):
 		k, l, r, d = t
 		if l==None:
-			return "+" + str(k)
+			return "+%s (%s)" % (str(k), r)
 		if r==None:
-			return "-" + str(k)
+			return "-%s (%s)" % (str(k), l)
 		return "~%s %s" % (k, repr(d).replace("\n","\n  "))
 
 	@property
