@@ -18,7 +18,7 @@ class SwitchSH(SH):
 		return self.default
 
 	def startElement(self, sh, name, attrs):
-		return self.get_case(name).handler()
+		return self.get_case(name).handler
 
 	def endElement(self, sh, name, spawned_handler):
 		if spawned_handler.result==None:

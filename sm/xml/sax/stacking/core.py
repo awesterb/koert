@@ -11,13 +11,13 @@ class StackingHandler(SaxHandler):
 		self.result = None
 
 	def startElement(self, name, attrs):
-		new_handler = self.current_handler.startElement(self, 
+		new_handler_type = self.current_handler.startElement(self, 
 				name, attrs)
-		if not new_handler:
+		if new_handler_type==None:
 			self.current_depth += 1
 			return
 		self.stack.append((self.current_handler, self.current_depth))
-		self.current_handler = new_handler
+		self.current_handler = new_handler_type()
 		self.current_depth = 0
 
 	def endElement(self, name):
