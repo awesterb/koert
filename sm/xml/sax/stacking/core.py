@@ -5,12 +5,14 @@ import time
 
 class StackingHandler(SaxHandler):
 	def __init__(self, init_handler_type):
-		self.current_depth = 0
 		self.stack = []
 		self.result = None
 		self.handler_lut = dict()
-		self.current_handler \
-				= self.get_handler_instance(init_handler_type)
+		self.setCHD(self.get_handler_instance(init_handler_type),0)
+
+	def setCHD(self, handler, depth):
+		self.current_handler = handler
+		self.current_depth = depth
 
 	def startElement(self, name, attrs):
 		new_handler_type = self.current_handler.startElement(self, 
@@ -19,9 +21,7 @@ class StackingHandler(SaxHandler):
 			self.current_depth += 1
 			return
 		self.stack.append((self.current_handler, self.current_depth))
-		self.current_handler \
-				= self.get_handler_instance(new_handler_type)
-		self.current_depth = 0
+		self.setCHD(self.get_handler_instance(new_handler_type),0)
 
 	def endElement(self, name):
 		if self.current_depth:
@@ -30,7 +30,7 @@ class StackingHandler(SaxHandler):
 			return
 		spawned_handler = self.current_handler
 		spawned_handler.goodbye(self)
-		self.current_handler, self.current_depth = self.stack.pop()
+		self.setCHD(*self.stack.pop())
 		self.current_handler.endElement(self, name, spawned_handler)
 		self.try_to_reclaim(spawned_handler)
 	
