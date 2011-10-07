@@ -173,7 +173,17 @@ class Count:
 	def __init__(self, countlets, constr):
 		self.countlets = countlets
 		self.constr = constr
-	
+
+	def map(self, f, comb=sum):
+		res = dict()
+		for item in self.countlets.iteritems():
+			k,v=f(*item)
+			if k in res:
+				res[k] = comb(res[k],v)
+			else:
+				res[k] = v
+		return Count(res, self.constr)
+
 	def total(self, f=lambda x:x, zero=0):
 		return sum([f(obj) * self.countlets[obj] 
 			for obj in self.countlets], zero)
