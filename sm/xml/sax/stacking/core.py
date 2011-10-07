@@ -91,15 +91,15 @@ class SH(object):
 class CharactersSH(SH):
 	def __init__(self, ot):
 		SH.__init__(self, ot)
-		self.pieces = []
+		self.piece = ""
 	def characters(self, sh, content):
-		self.pieces.append(content)
+		self.piece += content
 	def goodbye(self, sh):
-		self.post_result(sh, self._tweak_result(''.join(self.pieces)))
+		self.post_result(sh, self._tweak_result(self.piece))
 	def _tweak_result(self, result):
 		return result
 	def reclaim(self):
-		del self.pieces[:]
+		self.piece=""
 		self.result=None
 		return True
 
