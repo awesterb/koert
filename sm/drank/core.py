@@ -453,7 +453,15 @@ class EventDir:
 			event.register_btc(count[event])
 		return count
 
+	def get_in_interval(self, start, end):
+		for ev in self.events.itervalues():
+			if start <= ev.date <= end:
+				yield ev
 
+
+class PriceListErr(MildErr):
+	def __str__(self):
+		return "'%s' has no price in %s." % self.args
 
 class PriceList:
 	def __init__(self, name, prices):
@@ -464,7 +472,10 @@ class PriceList:
 		return self.name
 
 	def __getitem__(self, obj):
-		return self.prices[obj]
+		try:
+			return self.prices[obj]
+		except KeyError:
+			raise PriceListErr(self, obj)
 
 	@classmethod
 	def from_path(cls, path, name, boozedir):
