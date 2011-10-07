@@ -591,6 +591,10 @@ class InvCountDir:
 		return self.invcounts[code]
 	
 
+class DelivErr(MildErr):
+	def __str__(self):
+		return "error concerning delivery %s:\n  %s" % self.args
+
 class Deliv:
 	def __init__(self, code, event, description, count):
 		self.code = code
@@ -601,7 +605,10 @@ class Deliv:
 
 	@property
 	def price(self):
-		return self.count.total(lambda x: x.price)
+		try:
+			return self.count.total(lambda x: x.price)
+		except MildErr as e:
+			raise DelivErr(self, e)
 
 	@property
 	def beertank(self):
