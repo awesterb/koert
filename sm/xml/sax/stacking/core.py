@@ -47,6 +47,7 @@ class StackingHandler(SaxHandler):
 		handler = self.lookup_handler_instance(handler_type)
 		if handler==None:
 			return handler_type(handler_type)
+		handler.age += 1
 		return handler
 	
 	def lookup_handler_instance(self, handler_type):
@@ -70,6 +71,7 @@ class SH(object):
 	def __init__(self, orig_type):
 		self.result = None
 		self.orig_type = orig_type
+		self.age = 0
 	def startElement(self, sh, name, attrs):
 		return None
 	def endElement(self, sh, name, spawned_handler):
@@ -82,6 +84,8 @@ class SH(object):
 		return False
 	def post_result(self, sh, result):
 		self.result = result
+	def __repr__(self):
+		return "%s(%s)" % (self.__class__.__name__, self.age)
 
 
 class CharactersSH(SH):
