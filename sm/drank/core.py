@@ -603,6 +603,9 @@ class Deliv:
 		self.count = count
 		self._beertank = None
 
+	def __repr__(self):
+		return self.code
+
 	@property
 	def price(self):
 		try:
