@@ -3,8 +3,8 @@ from cases import No as NoCase
 
 
 class SwitchSH(SH):
-	def __init__(self, cases, default=NoCase):
-		SH.__init__(self)
+	def __init__(self, ot, cases, default=NoCase):
+		SH.__init__(self, ot)
 		self.cases = cases
 		self.default = default
 		self.child_results = dict()

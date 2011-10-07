@@ -9,20 +9,20 @@ from koert.xml.sax.stacking.switch.cases import List as ListCase, \
 class SaxHandler(StackingHandler):
 	def __init__(self, scheme):
 		self.scheme = scheme
-		StackingHandler.__init__(self, PreGncSH())
+		StackingHandler.__init__(self, PreGncSH)
 
 
 class PreGncSH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {"gnc-v2": SingleCase("gnc",GncSH)})
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {"gnc-v2": SingleCase("gnc",GncSH)})
 
 	def post_result(self, sh, result):
 		SwitchSH.post_result(self, sh, result['gnc'])
 
 
 class GncSH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {
 			"gnc:book": DictCase("books", BookSH, 
 				lambda bk: bk.id),
 			"gnc:count-data": NoCase})
@@ -32,8 +32,8 @@ class GncSH(SwitchSH):
 
 
 class BookSH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {
 			"book:id": SingleCase("id", CharactersSH, True), 
 			"gnc:account": DictCase("accounts",AccountSH,
 				lambda ac: ac.id),
@@ -49,8 +49,8 @@ class BookSH(SwitchSH):
 
 
 class CommoditySH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {
 			"cmdty:space": SingleCase("space", CharactersSH),
 			"cmdty:id": SingleCase("id", CharactersSH, True),
 			"cmdty:get_quotes": NoCase,
@@ -63,8 +63,8 @@ class CommoditySH(SwitchSH):
 
 
 class AccountSH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {
 			"act:name": SingleCase("name",CharactersSH, True),
 			"act:id": SingleCase("id",CharactersSH, True),
 			"act:type": SingleCase("type",CharactersSH, True),
@@ -84,8 +84,8 @@ class AccountSH(SwitchSH):
 
 
 class TransactionSH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {
 			"trn:id": SingleCase("id",CharactersSH, True),
 			"trn:description": SingleCase("description",
 				CharactersSH),
@@ -104,8 +104,8 @@ class TransactionSH(SwitchSH):
 
 
 class SplitsSH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {
 			"trn:split": DictCase("splits",SplitSH,lambda s: s.id)})
 	
 	def post_result(self, sh, result):
@@ -113,8 +113,8 @@ class SplitsSH(SwitchSH):
 
 
 class SplitSH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {
 			"split:id":  SingleCase("id",CharactersSH,True),
 			"split:value": SingleCase("value",FractionSH, True),
 			"split:quantity": SingleCase("quantity",
@@ -131,8 +131,8 @@ class SplitSH(SwitchSH):
 
 
 class TimeStampSH(SwitchSH):
-	def __init__(self):
-		SwitchSH.__init__(self, {
+	def __init__(self, ot):
+		SwitchSH.__init__(self, ot, {
 			"ts:date": SingleCase("date",TimeSH,True),
 			"ts:ns": SingleCase("ns",IntSH)
 			})
