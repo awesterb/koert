@@ -177,7 +177,7 @@ class Count:
 		self.countlets = countlets
 		self.constr = constr
 
-	def map(self, f, comb=sum):
+	def map(self, f, comb=lambda x,y: sum((x,y))):
 		res = dict()
 		for item in self.countlets.iteritems():
 			for k,v in f(*item):
