@@ -120,12 +120,17 @@ class IntSH(CharactersSH):
 	def _tweak_result(self, result):
 		return int(result)
 
+# Fractions of the form 131324...329884/100...000.
 class FractionSH(CharactersSH):
 	def __init__(self, ot):
 		CharactersSH.__init__(self, ot)
 	def _tweak_result(self, result):
-		d, n = map(int,result.split("/"))
-		return Decimal(d)/Decimal(n)
+		d, n = map(lambda x: x.strip(), result.split("/"))
+		# ugly but fast:
+		exp = (len(n)-1)
+		absd = d.lstrip("-")
+		signd = len(d) - len(absd)
+		return Decimal((signd, map(int,absd), exp))
 
 class PrintSH(SH):
 	def __init__(self, ot):
