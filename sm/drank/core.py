@@ -177,11 +177,11 @@ class Count:
 	def map(self, f, comb=sum):
 		res = dict()
 		for item in self.countlets.iteritems():
-			k,v=f(*item)
-			if k in res:
-				res[k] = comb(res[k],v)
-			else:
-				res[k] = v
+			for k,v in f(*item):
+				if k in res:
+					res[k] = comb(res[k],v)
+				else:
+					res[k] = v
 		return Count(res, self.constr)
 
 	def total(self, f=lambda x:x, zero=0):
