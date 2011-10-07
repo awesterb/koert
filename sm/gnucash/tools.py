@@ -1,4 +1,3 @@
-from xml.sax import parse
 from koert.gnucash.xmlformat import SaxHandler
 import gzip
 
@@ -15,7 +14,17 @@ def open_pos_gzipped(filepath):
 		f = open(filepath)
 	return f
 
-def open_gcf(filepath, scheme):
+def saxparse(f,handler):
+	from xml.sax import parse as saxparse
+	saxparse (f, handler)
+
+def lxmlparse(f,handler):
+	from lxml.etree import parse as lxmlparse
+	from lxml.sax import saxify
+	etree = lxmlparse(f)
+	saxify(etree,handler)
+
+def open_gcf(filepath, scheme, parse=saxparse):
 	handler = SaxHandler(scheme)
 	f = open_pos_gzipped(filepath)
 	parse(f, handler)

@@ -23,9 +23,9 @@ class PreGncSH(SwitchSH):
 class GncSH(SwitchSH):
 	def __init__(self, ot):
 		SwitchSH.__init__(self, ot, {
-			"gnc:book": DictCase("books", BookSH, 
+			"book": DictCase("books", BookSH, 
 				lambda bk: bk.id),
-			"gnc:count-data": NoCase})
+			"count-data": NoCase})
 
 	def post_result(self, sh, result):
 		SwitchSH.post_result(self, sh, File(result))
@@ -34,15 +34,15 @@ class GncSH(SwitchSH):
 class BookSH(SwitchSH):
 	def __init__(self, ot):
 		SwitchSH.__init__(self, ot, {
-			"book:id": SingleCase("id", CharactersSH, True), 
-			"gnc:account": DictCase("accounts",AccountSH,
+			"id": SingleCase("id", CharactersSH, True), 
+			"account": DictCase("accounts",AccountSH,
 				lambda ac: ac.id),
-			"gnc:transaction": DictCase("transactions",
+			"transaction": DictCase("transactions",
 				TransactionSH, lambda tr: tr.id),
-			"gnc:count-data": NoCase,
-			"gnc:commodity": DictCase("commodities", CommoditySH, 
+			"count-data": NoCase,
+			"commodity": DictCase("commodities", CommoditySH, 
 				lambda cm: cm.id),
-			"gnc:budget": NoCase})
+			"budget": NoCase})
 	
 	def post_result(self, sh, result):
 		SwitchSH.post_result(self, sh, Book(result, sh.scheme))
@@ -51,12 +51,12 @@ class BookSH(SwitchSH):
 class CommoditySH(SwitchSH):
 	def __init__(self, ot):
 		SwitchSH.__init__(self, ot, {
-			"cmdty:space": SingleCase("space", CharactersSH),
-			"cmdty:id": SingleCase("id", CharactersSH, True),
-			"cmdty:get_quotes": NoCase,
-			"cmdty:quote_source": SingleCase("quote_source",
+			"space": SingleCase("space", CharactersSH),
+			"id": SingleCase("id", CharactersSH, True),
+			"get_quotes": NoCase,
+			"quote_source": SingleCase("quote_source",
 				CharactersSH),
-			"cmdty:quote_tz": NoCase})
+			"quote_tz": NoCase})
 	
 	def post_result(self, sh, result):
 		SwitchSH.post_result(self, sh, Commodity(result))
@@ -65,18 +65,18 @@ class CommoditySH(SwitchSH):
 class AccountSH(SwitchSH):
 	def __init__(self, ot):
 		SwitchSH.__init__(self, ot, {
-			"act:name": SingleCase("name",CharactersSH, True),
-			"act:id": SingleCase("id",CharactersSH, True),
-			"act:type": SingleCase("type",CharactersSH, True),
-			"act:parent": SingleCase("parent",CharactersSH),
-			"act:description": SingleCase("description",
+			"name": SingleCase("name",CharactersSH, True),
+			"id": SingleCase("id",CharactersSH, True),
+			"type": SingleCase("type",CharactersSH, True),
+			"parent": SingleCase("parent",CharactersSH),
+			"description": SingleCase("description",
 				CharactersSH),
-			"act:code": SingleCase("code",CharactersSH),
-			"act:commodity": SingleCase("commodity",
+			"code": SingleCase("code",CharactersSH),
+			"commodity": SingleCase("commodity",
 				CommoditySH),
-			"act:commodity-scu": SingleCase("commodity-scu",
+			"commodity-scu": SingleCase("commodity-scu",
 				IntSH),
-			"act:slots": NoCase
+			"slots": NoCase
 			})
 
 	def post_result(self, sh, result):
@@ -86,17 +86,17 @@ class AccountSH(SwitchSH):
 class TransactionSH(SwitchSH):
 	def __init__(self, ot):
 		SwitchSH.__init__(self, ot, {
-			"trn:id": SingleCase("id",CharactersSH, True),
-			"trn:description": SingleCase("description",
+			"id": SingleCase("id",CharactersSH, True),
+			"description": SingleCase("description",
 				CharactersSH),
-			"trn:num": SingleCase("num",CharactersSH),
-			"trn:splits": SingleCase("splits",SplitsSH),
-			"trn:currency": SingleCase("currency", 
+			"num": SingleCase("num",CharactersSH),
+			"splits": SingleCase("splits",SplitsSH),
+			"currency": SingleCase("currency", 
 				CommoditySH, True),
-			"trn:slots": NoCase,
-			"trn:date-posted": SingleCase(
+			"slots": NoCase,
+			"date-posted": SingleCase(
 				"date-posted",TimeStampSH),
-			"trn:date-entered": SingleCase(
+			"date-entered": SingleCase(
 				"date-entered",TimeStampSH)})
 
 	def post_result(self, sh, result):
@@ -106,7 +106,7 @@ class TransactionSH(SwitchSH):
 class SplitsSH(SwitchSH):
 	def __init__(self, ot):
 		SwitchSH.__init__(self, ot, {
-			"trn:split": DictCase("splits",SplitSH,lambda s: s.id)})
+			"split": DictCase("splits",SplitSH,lambda s: s.id)})
 	
 	def post_result(self, sh, result):
 		SwitchSH.post_result(self, sh, result['splits'])
@@ -115,14 +115,14 @@ class SplitsSH(SwitchSH):
 class SplitSH(SwitchSH):
 	def __init__(self, ot):
 		SwitchSH.__init__(self, ot, {
-			"split:id":  SingleCase("id",CharactersSH,True),
-			"split:value": SingleCase("value",FractionSH, True),
-			"split:quantity": SingleCase("quantity",
+			"id":  SingleCase("id",CharactersSH,True),
+			"value": SingleCase("value",FractionSH, True),
+			"quantity": SingleCase("quantity",
 				FractionSH,True),
-			"split:account": SingleCase("account", 
+			"account": SingleCase("account", 
 				CharactersSH, True),
-			"split:memo": SingleCase("memo",CharactersSH),
-			"split:reconciled-state": SingleCase(
+			"memo": SingleCase("memo",CharactersSH),
+			"reconciled-state": SingleCase(
 				"reconciled-state",CharactersSH)
 			})
 
@@ -133,8 +133,8 @@ class SplitSH(SwitchSH):
 class TimeStampSH(SwitchSH):
 	def __init__(self, ot):
 		SwitchSH.__init__(self, ot, {
-			"ts:date": SingleCase("date",TimeSH,True),
-			"ts:ns": SingleCase("ns",IntSH)
+			"date": SingleCase("date",TimeSH,True),
+			"ns": SingleCase("ns",IntSH)
 			})
 	
 	def post_result(self, sh, result):

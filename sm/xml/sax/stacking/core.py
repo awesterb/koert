@@ -13,8 +13,20 @@ class StackingHandler(SaxHandler):
 	def setCHD(self, handler, depth):
 		self.current_handler = handler
 		self.current_depth = depth
+	
+	def startElementNS(self, name, qname, attrs):
+		self.startElement_base(name[1], attrs)
 
+	def endElementNS(self, name, qname):
+		self.endElement_base(name[1])
+	
 	def startElement(self, name, attrs):
+		self.startElement_base(name.split(":",1)[-1], attrs)
+	
+	def endElement(self, name):
+		self.endElement_base(name.split(":",1)[-1])
+
+	def startElement_base(self, name, attrs):
 		new_handler_type = self.current_handler.startElement(self, 
 				name, attrs)
 		if new_handler_type==None:
@@ -23,7 +35,7 @@ class StackingHandler(SaxHandler):
 		self.stack.append((self.current_handler, self.current_depth))
 		self.setCHD(self.get_handler_instance(new_handler_type),0)
 
-	def endElement(self, name):
+	def endElement_base(self, name):
 		if self.current_depth:
 			self.current_depth -= 1
 			self.current_handler.endElement(self, name, None)
