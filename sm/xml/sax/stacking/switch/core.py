@@ -8,6 +8,9 @@ class SwitchSH(SH):
 		self.cases = cases
 		self.default = default
 		self.child_results = dict()
+		self.init_child_results()
+
+	def init_child_results(self):
 		for case in self.cases.itervalues():
 			case.init(self.child_results)
 
@@ -30,3 +33,10 @@ class SwitchSH(SH):
 		for case in self.cases.itervalues():
 			case.final(self.child_results)
 		self.post_result(sh, self.child_results)
+
+	def reclaim(self):
+		self.result=None
+		self.child_results=dict()
+		self.init_child_results()
+		return True
+
