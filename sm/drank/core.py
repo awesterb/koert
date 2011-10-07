@@ -89,6 +89,9 @@ class Product:
 	def __hash__(self):
 		return hash(self.handle)^hash(self.name)
 
+	def factors_scaled(self, sc):
+		return self.factors.map(lambda k,v: ((k,v*sc),))
+
 	@property
 	def beertank(self):
 		for f in self.factors:
