@@ -73,7 +73,7 @@ class DiffitObj:
 
 	@property
 	def differ(self):
-		return len(self.difference)!=0.
+		return len(self.difference)!=0
 	
 	def __repr__(self):
 		if not self.differ:
