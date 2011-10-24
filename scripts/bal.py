@@ -2,25 +2,40 @@ from koert.gnucash.tools import open_gcf
 from koert.gnucash.balance import get_opening_balance, get_balance_at
 from time import mktime, strptime
 import koert.verification.fin7scheme as scheme
+import argparse
 import sys
 
-def main(argv):
-	if not len(argv)>=1+2 and len(argv)<=1+3:
-		print "please provide (1) a path to a gnucash file, " \
-				"(2) a path to an account and" \
-				" optionally (3) a date."
-	path, acpath = argv[1:3]
-	gcf = open_gcf(path, scheme)
+def parse_args():
+	parser = argparse.ArgumentParser(description="Show the balance")
+	parser.add_argument("gnucash_file")
+	parser.add_argument("--date", type=parse_time, default=None)
+	parser.add_argument("--account", type=str, default=":")
+	return parser.parse_args()
+
+def parse_time(s):
+	return mktime(strptime(s, '%Y-%m-%d'))
+
+def get_relevant_children(ac):
+	todo = [ac]
+	while(len(todo)>0):
+		ac = todo.pop()
+		if len(ac.children)<=10:
+			todo.extend(ac.children.values())
+		yield ac
+
+def main():
+	args = parse_args()
+	gcf = open_gcf(args.gnucash_file, scheme)
 	book = gcf.fields['books'].values()[0]
 	opb = None
-	if len(argv)==1+2:
+	if args.date==None:
 		opb =  get_opening_balance(book, 
 				book.ac_by_path(":Openingsbalansen"))
 	else:
-		t = mktime(strptime(argv[3], '%Y-%m-%d %H:%M:%S'))
-		opb = get_balance_at(book, t)
-	ac = book.ac_by_path(acpath)
-	print "%65s %10s" % (acpath, str(opb[ac]))
+		opb = get_balance_at(book, args.date)
+	acs = get_relevant_children(book.ac_by_path(args.account))
+	for ac in acs:
+		print "%65s %10s" % (ac.path, str(opb[ac]))
 
 if __name__=="__main__":
-	main(sys.argv)
+	main() 
