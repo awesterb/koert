@@ -139,7 +139,7 @@ class FractionSH(CharactersSH):
 	def _tweak_result(self, result):
 		d, n = map(lambda x: x.strip(), result.split("/"))
 		# ugly but fast:
-		exp = (len(n)-1)
+		exp = -(len(n)-1)
 		absd = d.lstrip("-")
 		signd = len(d) - len(absd)
 		return Decimal((signd, map(int,absd), exp))
