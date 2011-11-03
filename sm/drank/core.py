@@ -108,7 +108,8 @@ class ManyMildErrs(MildErr):
 
 # raised when, e.g., product does not appear in productdir.
 class ObjDirErr(MildErr):
-	pass
+	def __repr__(self):
+		return "Unknown %s: %s" % self.args
 
 # raised when the string representation of a countlet
 # has a white object name.
@@ -141,8 +142,7 @@ class ProductDir:
 
 	def __getitem__(self, name):
 		if name not in self.products:
-			warn("Unknown product: '%s'" % name)
-			raise ObjDirErr()
+			raise ObjDirErr("product", name)
 		return self.products[name]
 	
 	def __contains__(self, name):
@@ -168,8 +168,7 @@ class FactorDir:
 
 	def __getitem__(self, name):
 		if name not in self.factors:
-			warn("Unknown factor: %s" % name)
-			raise ObjDirErr()
+			raise ObjDirErr("factor",name)
 		return self.factors[name]
 	
 	def __contains__(self, name):
@@ -544,8 +543,7 @@ class PriceListDir:
 	
 	def __getitem__(self, name):
 		if name not in self.pricelists:
-			warn("Unknown pricelist: %s" % name)
-			raise ObjDirErr()
+			raise ObjDirErr("pricelist", name)
 		return self.pricelists[name]
 
 
@@ -607,8 +605,7 @@ class InvCountDir:
 
 	def __getitem__(self, code):
 		if code not in self.invcounts:
-			warn("Unknown inventory count: %s" % code)
-			raise ObjDirErr()
+			raise ObjDirErr("inventory-count", code)
 		return self.invcounts[code]
 	
 
@@ -708,8 +705,7 @@ class DelivDir:
 
 	def __getitem__(self, code):
 		if code not in self.delivs:
-			warn("Unknown delivery: %s" % code)
-			raise ObjDirErr()
+			raise ObjDirErr("delivery",code)
 		return self.delivs[code]
 
 	def __iter__(self):
