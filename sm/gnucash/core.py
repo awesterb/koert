@@ -23,6 +23,10 @@ class File(GcStruct):
 	def books(self):
 		return self.fields['books']
 
+	@property
+	def book(self):
+		return self.books.values()[0]
+
 
 class Book(GcObj):
 	def __init__(self, fields, scheme):
