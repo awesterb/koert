@@ -103,6 +103,9 @@ class Product:
 class MildErr(Exception):
 	pass
 
+class ManyMildErrs(MildErr):
+	pass
+
 # raised when, e.g., product does not appear in productdir.
 class ObjDirErr(MildErr):
 	pass
@@ -211,22 +214,27 @@ class Count:
 	@classmethod
 	def from_array(cls, ar, objdir, constr):
 		countlets = {}
+		errors = []
 		for line in ar:
 			if len(line)==0:
 				continue
 			try:
 				obj, amount = cls.countlet_from_line(line, 
 						objdir, constr)
-			except NoObjStrErr:
+			except NoObjStrErr as e:
+				errors.append(e)
 				continue
 			## to get errors on all missing products
-			except ObjDirErr:
+			except ObjDirErr as e:
+				errors.append(e)
 				continue
 			if obj in countlets:
 				raise MildErr("obj appears twice: '%s'"
 						"(amount: %s)"
 						% (obj, amount))
 			countlets[obj] = amount
+		if len(errors)>0:
+			raise ManyMildErrs(errors)
 		return cls(countlets=countlets, constr=constr)
 	
 	@classmethod
