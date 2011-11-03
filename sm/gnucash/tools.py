@@ -48,7 +48,14 @@ def search_for_cache(filepath):
 def update_cache(filepath, gcf):
 	cp = cache_path(filepath)
 	with open(cp,"w") as f:
-		cPickle.dump(gcf,f)
+		try:
+			cPickle.dump(gcf,f)
+		except RuntimeError as e:
+			warn("""Failed to dump a pickled version of the \
+gnucash file "%s" due to the RuntimeError below.  If this is a stack \
+overflow, you might want to increase the maximum recursion depth by \
+sys.setrecursiondepth.""")
+			raise e
 
 def open_gcf(filepath, scheme, parse=saxparse, mind_cache=True):
 	if mind_cache:
