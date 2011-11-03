@@ -1,7 +1,7 @@
 from koert.gnucash.tools import open_gcf
 from koert.gnucash.balance import get_opening_balance, get_balance_at
 from time import mktime, strptime
-import koert.verification.fin7scheme as scheme
+from koert.verification.fin7scheme import scheme
 import argparse
 import sys
 

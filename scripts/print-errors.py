@@ -2,7 +2,7 @@ from koert.verification.core import Verifier, TrsHaveNum, TrNumsAreRemco, \
 		TrNumsAreRemcoContinuous, AcMutThenNoSplit, TrMutAc, \
 		SpNonZero, TrHaveFin7Softref
 from koert.gnucash.tools import open_gcf
-import koert.verification.fin7scheme as scheme
+from koert.verification.fin7scheme import scheme
 import sys
 
 def main(argv):
