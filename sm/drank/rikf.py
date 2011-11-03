@@ -25,13 +25,16 @@ def strip_line(line):
 		return None
 	return line[:i]
 
+class RikfErr(Exception):
+	def __str__(self):
+		return "while parsing '%s: %s'" % self.args
+
 def open_rikf_ar(p):
 	with open(p) as f:
 		try:
 			return list(read_rikf(f))
 		except csv.Error as e:
-			print "the path was: %s" % p
-			raise e
+			raise RikfErr(p, e)
 
 
 def comment_stripper(f):
