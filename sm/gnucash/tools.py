@@ -2,6 +2,7 @@ from koert.gnucash.xmlformat import SaxHandler
 import gzip
 import os.path
 import cPickle
+import sys
 from warnings import warn
 
 def open_pos_gzipped(filepath):
@@ -47,6 +48,8 @@ def search_for_cache(filepath):
 
 def update_cache(filepath, gcf):
 	cp = cache_path(filepath)
+	if sys.getrecursionlimit()<2000:
+		sys.setrecursionlimit(2000)
 	with open(cp,"w") as f:
 		try:
 			cPickle.dump(gcf,f)
@@ -54,7 +57,7 @@ def update_cache(filepath, gcf):
 			warn("""Failed to dump a pickled version of the \
 gnucash file "%s" due to the RuntimeError below.  If this is a stack \
 overflow, you might want to increase the maximum recursion depth by \
-sys.setrecursiondepth.""")
+sys.setrecursionlimit.""")
 			raise e
 
 def open_gcf(filepath, scheme, parse=saxparse, mind_cache=True):
