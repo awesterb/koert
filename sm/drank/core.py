@@ -99,9 +99,18 @@ class Product:
 				return self.factors[f]
 		return self.factors.constr(0)
 
+
 # We often ignore the following errors
 class MildErr(Exception):
 	pass
+
+class LoadErr(MildErr):
+	def __repr__(self):
+		return "Failed to load %s '%s': %s" % self.args
+
+class DoubleErr(MildErr):
+	def __repr__(self):
+		return "This %s appears twice: %s" % self.args
 
 class ManyMildErrs(MildErr):
 	pass
@@ -118,6 +127,7 @@ class NoObjStrErr(MildErr):
 
 class ProductDir:
 	def __init__(self, path, boozedir):
+		errors = []
 		products = {}
 		self.boozedir = boozedir
 		self.path = path
@@ -126,16 +136,19 @@ class ProductDir:
 			try:
 				product = Product.from_line(line, self.boozedir)
 			except MildErr:
-				warn("Failed to load product from line: %s" 
-						% (line,))
+				errors.append(LoadErr("product", 
+					line, "parse error"))
 				continue
 			handle = product.handle
 			if handle in products:
-				warn("product handle appears"
-						"twice: %s" % handle)
+				errors.append(DoubleErr("product handle",
+					handle))
 				continue
 			products[handle]=product
 		self.products = products
+		if len(errors)>0:
+			warn("Errors when loading the product directory: %s" 
+					% ManyMildErrs(errors))
 
 	def __repr__(self):
 		return "Product Directory"
@@ -351,6 +364,7 @@ class BarFormDir:
 	
 	def _load_barforms(self):
 		self.barforms = {}
+		errors = []
 		for fn in listdir(self.path):
 			if not ospath.isfile(ospath.join(self.path, fn)):
 				continue
@@ -361,10 +375,12 @@ class BarFormDir:
 				bf = self._load_barform(fn, comps)
 				bf.event.register_barform(bf)
 			except MildErr as me:
-				warn(("failed to load barform '%s': %s") \
-						% (fn, me))
+				errors.append(LoadErr("barform", fn, me))
 				continue
 			self.barforms[bf.number] = bf
+		if len(errors)>0:
+			warn("Failed to load some barforms: \n\t%s" 
+					% '\n\t'.join(map(repr,errors)))
 
 	def _load_barform(self, fn, comps):
 		number = comps[0]
@@ -520,6 +536,7 @@ class PriceListDir:
 		self._load_pricelists()
 	
 	def _load_pricelists(self):
+		errors = []
 		for fn in listdir(self.path):
 			comps, ignore = BoozeDir.processFn(fn)
 			if ignore:
@@ -527,10 +544,12 @@ class PriceListDir:
 			try:
 				bf = self._load_pricelist(fn, comps)
 			except MildErr as me:
-				warn("failed to load pricelist '%s': %s" \
-						% (fn, me))
+				errors.append(LoadErr("pricelist", fn, me))
 				continue
 			self.pricelists[bf.name] = bf
+		if len(errors)>0:
+			warn("Failed to load some pricelists: \n\t%s" 
+				% "\n\t".join(map(repr,errors)))
 	
 	def _load_pricelist(self, fn, comps):
 		path = ospath.join(self.path, fn)
@@ -582,6 +601,7 @@ class InvCountDir:
 		self._load_invcounts()
 	
 	def _load_invcounts(self):
+		errors = []
 		for fn in listdir(self.path):
 			comps, ignore = BoozeDir.processFn(fn)
 			if ignore:
@@ -590,10 +610,13 @@ class InvCountDir:
 				ic = self._load_invcount(fn, comps)
 				ic.event.register_invcount(ic)
 			except MildErr as me:
-				warn("failed to load inventory count '%s': %s"\
-						% (fn,me))
+				errors.append(LoadErr('inventory-count',
+					fn, me))
 				continue
 			self.invcounts[ic.code] = ic
+		if len(errors)>0:
+			warn("Failed to load some inventory counts: \n\t%s"
+					% "\n\t".join(map(repr,errors)))
 	
 	def _load_invcount(self, fn, comps):
 		path = ospath.join(self.path, fn)
@@ -682,6 +705,7 @@ class DelivDir:
 
 	
 	def _load_delivs(self):
+		errors = []
 		for fn in listdir(self.path):
 			comps, ignore = BoozeDir.processFn(fn)
 			if ignore:
@@ -690,10 +714,12 @@ class DelivDir:
 				d = self._load_deliv(fn, comps)
 				d.event.register_deliv(d)
 			except MildErr as me:
-				warn("failed to load delivery '%s': %s" \
-						% (fn, me))
+				errors.append(LoadErr("delivery", fn, me))
 				continue
 			self.delivs[d.code] = d
+		if len(errors)>0:
+			warn("Failed to load some deliveries: \n\t%s"
+					% '\n\t'.join(map(repr, errors)))
 	
 	def _load_deliv(self, fn, comps):
 		path = ospath.join(self.path, fn)
