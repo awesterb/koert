@@ -1,4 +1,5 @@
 from datetime import datetime
+from koert.common.bintree import BinarySearchTree
 import re
 
 class GcStruct(object):
@@ -36,6 +37,7 @@ class Book(GcObj):
 		self._set_account_refs()
 		self._trs_by_num = None
 		self._trs_by_softref = None
+		self._softrefs_by_kind = None
 		self._acs_by_softref_kind = None
 		self._apply_scheme()
 
@@ -169,6 +171,21 @@ class Book(GcObj):
 					res[code] = []
 				res[code].append(tr)
 		self._trs_by_softref = res
+	
+	@property
+	def softrefs_by_kind(self):
+		if self._softrefs_by_kind == None:
+			self._set_softrefs_by_kind()
+		return self._softrefs_by_kind
+
+	def _set_softrefs_by_kind(self):
+		res = {}
+		for kind in Softref.kinds:
+			res[kind] = BinarySearchTree()
+		for tr in self.transactions.itervalues():
+			for sr in tr.softrefs:
+				res[sr.kind].insert(sr)
+		self._softrefs_by_kind = res
 
 	@property
 	def acs_by_softref_kind(self):
