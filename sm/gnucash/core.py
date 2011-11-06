@@ -397,12 +397,36 @@ class Softref:
 		if m==None:
 			return
 		kind, number_str = m.group(1, 2)
-		number = number_str.split(".")
+		bits = number_str.split(".")
+		good_bits = [bit for bit in bits if bit != ""]
+		try:
+			number = tuple(map(int,good_bits))
+		except ValueError as e:
+			raise ValueError("Could not parse %r as Softref: %s"
+					% (token, e))
 		yield cls(kind=kind, number=number)
 
 	def __init__(self, kind, number):
 		self._kind = kind.lower()
-		self._number = map(lambda x: x.lower(), number)
+		self._number = number
+
+	def __cmp__(self, other):
+		if not isinstance(other, Softref):
+			return NotImplemented
+		if self.kind != other.kind:
+			return NotImplemented
+		# NB: Ordering on tuples in Python is lexicographic
+		return cmp(self.number, other.number)
+
+	def __eq__(self, other):
+		if not isinstance(other, Softref):
+			return False
+		if self.kind!=other.kind:
+			return False
+		return self.number == other.number
+
+	def __hash__(self):
+		return hash((self.kind, self.number))
 
 	@property
 	def kind(self):
@@ -417,4 +441,4 @@ class Softref:
 
 	@property
 	def code(self):
-		return self.kind + '.'.join(self._number)
+		return self.kind + '.'.join(map(str,self._number))
