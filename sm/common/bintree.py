@@ -78,7 +78,7 @@ class BinarySearchTree(object):
     # Public Methods
     #/////////////////////////////////////////////////////////////////
         
-    def insert(self, value):
+    def insert(self, value, only_if_not_present=False):
         """
         Insert the specified value into the BST.
         """
@@ -90,7 +90,10 @@ class BinarySearchTree(object):
         # Walk down the tree until we find an empty node.
         node = self._root
         while node:
-            if sort_key < node[_SORT_KEY]:
+	    r = cmp(sort_key, node[_SORT_KEY])
+	    if r==0:
+	        return	
+            elif r<0:
                 node = node[_LEFT]
             else:
                 node = node[_RIGHT]
