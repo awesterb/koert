@@ -34,8 +34,8 @@ def cache_path(filepath):
 
 def get_commit_name():
 	directory = os.path.dirname(__file__)
-	p = Popen('git --work-tree=%s rev-parse HEAD' % directory,
-			stdout=PIPE, shell=True)
+	p = Popen('git rev-parse HEAD',
+			stdout=PIPE, shell=True, cwd=directory)
 	outp, err = p.communicate()
 	return outp
 
