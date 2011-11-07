@@ -40,6 +40,7 @@ class Book(GcObj):
 		self._softrefs_by_kind = None
 		self._acs_by_softref_kind = None
 		self._maximum_softrefs_by_kind = None
+		self._minimum_softrefs_by_kind = None
 		self._missing_softrefs_by_kind = None
 		self._apply_scheme()
 
@@ -208,30 +209,39 @@ class Book(GcObj):
 	@property
 	def maximum_softrefs_by_kind(self):
 		if self._maximum_softrefs_by_kind == None:
-			self._set_maximum_and_missing_softrefs_by_kind()
+			self._set_3m_softrefs_by_kind()
 		return self._maximum_softrefs_by_kind
+	
+	@property
+	def minimum_softrefs_by_kind(self):
+		if self._minimum_softrefs_by_kind == None:
+			self._set_3m_softrefs_by_kind()
+		return self._minimum_softrefs_by_kind
 	
 		
 	@property
 	def missing_softrefs_by_kind(self):
 		if self._missing_softrefs_by_kind == None:
-			self._set_maximum_and_missing_softrefs_by_kind()
+			self._set_3m_softrefs_by_kind()
 		return self._missing_softrefs_by_kind
 
-	def _set_maximum_and_missing_softrefs_by_kind(self):
+	def _set_3m_softrefs_by_kind(self):
 		maximum = {}
+		minimum = {}
 		missing = {}
 		for kind in Softref.kinds:
-			maximum[kind],missing[kind] = \
+			maximum[kind],minimum[kind],missing[kind] = \
 					self._smamsbk_by_kind(kind)
 		self._maximum_softrefs_by_kind = maximum
 		self._missing_softrefs_by_kind = missing
+		self._minimum_softrefs_by_kind = minimum
 
 	
 	def _smamsbk_by_kind(self, kind):
 		previous = None
 		missing = []
 		maximum = []
+		minimum = []
 		for sr in self.softrefs_by_kind[kind]:
 			# For a description of L,J,M, see below.
 			L,J,M = self._smamsbk_compare(previous, sr)
@@ -239,11 +249,13 @@ class Book(GcObj):
 			if M:
 				missing.append((previous,sr))
 			if J:
-				maximum.append(previous)
+				minimum.append(sr)
+				if previous!=None:
+					maximum.append(previous)
 			previous = sr
 		if previous!=None:
 			maximum.append(previous) # now:  previous is the last
-		return (maximum,missing)
+		return (maximum,minimum,missing)
 
 	# returns a pair (L,J,M), where 
 	#   L  is a bool which indicates whether s1 <= s2  
@@ -257,7 +269,7 @@ class Book(GcObj):
 	#      if L is False, M is None
 	def _smamsbk_compare(self,sr1,sr2):
 		if sr1==None:
-			return (True, False, False)
+			return (True, True, False)
 		L,M = True,False # We'll see if we're wrong
 		n1, n2 = sr1.number, sr2.number
 		j=0   
