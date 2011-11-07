@@ -539,10 +539,14 @@ class Softref:
 	@property
 	def number(self):
 		return self._number
+
+	@property
+	def number_str(self):
+		return '.'.join(map(str,self._number))
 	
 	def __repr__(self):
 		return "<Softref %s>" % self.code
 
 	@property
 	def code(self):
-		return self.kind + '.'.join(map(str,self._number))
+		return self.kind + self.number_str
