@@ -39,6 +39,8 @@ class Book(GcObj):
 		self._trs_by_softref = None
 		self._softrefs_by_kind = None
 		self._acs_by_softref_kind = None
+		self._maximum_softrefs_by_kind = None
+		self._missing_softrefs_by_kind = None
 		self._apply_scheme()
 
 	def _set_account_refs(self):
@@ -202,7 +204,92 @@ class Book(GcObj):
 					res[kind]=[]
 				res[kind].append(ac)
 		self._acs_by_softref_kind = res
+	
+	@property
+	def maximum_softrefs_by_kind(self):
+		if self._maximum_softrefs_by_kind == None:
+			self._set_maximum_and_missing_softrefs_by_kind()
+		return self._maximum_softrefs_by_kind
+	
+		
+	@property
+	def missing_softrefs_by_kind(self):
+		if self._missing_softrefs_by_kind == None:
+			self._set_maximum_and_missing_softrefs_by_kind()
+		return self._missing_softrefs_by_kind
 
+	def _set_maximum_and_missing_softrefs_by_kind(self):
+		maximum = {}
+		missing = {}
+		for kind in Softref.kinds:
+			maximum[kind],missing[kind] = \
+					self._smamsbk_by_kind(kind)
+		self._maximum_softrefs_by_kind = maximum
+		self._missing_softrefs_by_kind = missing
+
+	
+	def _smamsbk_by_kind(self, kind):
+		previous = None
+		missing = []
+		maximum = []
+		for sr in self.softrefs_by_kind[kind]:
+			# For a description of L,J,M, see below.
+			L,J,M = self._smamsbk_compare(previous, sr)
+			assert(L) # softrefs_by_kind[kind] is ordered
+			if M:
+				missing.append((previous,sr))
+			if J:
+				maximum.append(previous)
+			previous = sr
+		maximum.append(previous) # now:  previous is the last
+		return (maximum,missing)
+
+	# returns a pair (L,J,M), where 
+	#   L  is a bool which indicates whether s1 <= s2  
+	#   J  is a bool which indicates whether there's a 'jump' 
+	#      between sr1 and sr2 like 
+	#          rvp3.4.5 -> rvp3.5.1
+	#   M  is a bool which indicates whether it's obvious there
+	#      are some Softrefs between sr1 and sr2, 
+	#      for instance in this case:
+	#          rvp3.4.5    rvp3.5.7
+	#      if L is False, M is None
+	def _smamsbk_compare(self,sr1,sr2):
+		if sr1==None:
+			return (True, False, False)
+		L,M = True,False # We'll see if we're wrong
+		n1, n2 = sr1.number, sr2.number
+		j=0   
+		# j will become the smallest index 
+		#  at which n1 and n2 differ or 
+		# min(len(n1),len(n2)) if such index does not exist.
+		while j<len(n1) and j<len(n2) and n1[j]==n2[j]:
+			j+=1
+		# We can now see if there is a jump:
+		J = j+1 < len(n1)
+		# There are three reasons M might be True; they follow below.
+		# Along the way, we'll see if L happens to be False.
+		#  (I)   n2[j+m] != 1 for some m>1
+		for k in xrange(j+1,len(n2)):
+			if n2[k]==1:
+				continue
+			M=True
+			break
+		#  (II)  n2[j] != 1 if j=min(len(n1),len(n2))
+		if j==min(len(n1),len(n2)):
+			if n2[j]!=1:
+				M = True
+			if len(n1)>len(n2):
+				L = False
+				M = None
+			return (L, J, M)
+		# (III) n1[j] 
+		if n1[j] > n2[j]:
+			L = False
+			M = None
+		elif n1[j]+1<n2[j]:
+			M = True
+		return (L,J,M)
 
 class Account(GcObj):
 	def __init__(self, fields):
