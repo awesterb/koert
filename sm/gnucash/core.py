@@ -241,7 +241,8 @@ class Book(GcObj):
 			if J:
 				maximum.append(previous)
 			previous = sr
-		maximum.append(previous) # now:  previous is the last
+		if previous!=None:
+			maximum.append(previous) # now:  previous is the last
 		return (maximum,missing)
 
 	# returns a pair (L,J,M), where 
