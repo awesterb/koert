@@ -4,6 +4,7 @@ import os.path
 import cPickle
 import sys
 from warnings import warn
+from subprocess import Popen, PIPE
 
 def open_pos_gzipped(filepath):
 	f = None
@@ -31,6 +32,13 @@ def lxmlparse(f,handler):
 def cache_path(filepath):
 	return filepath + ".pickled"
 
+def get_commit_name():
+	directory = os.path.dirname(__file__)
+	p = Popen('git --work-tree=%s rev-parse HEAD' % directory,
+			stdout=PIPE, shell=True)
+	outp, err = p.communicate()
+	return outp
+
 def search_for_cache(filepath):
 	cp = cache_path(filepath)
 	if not os.path.exists(cp):
@@ -39,8 +47,12 @@ def search_for_cache(filepath):
 	if os.path.getmtime(filepath) >= os.path.getmtime(cp):
 		return False
 	with open(cp,"r") as f:
+		current_commit_name = get_commit_name()
 		try:
-			return cPickle.load(f)
+			cached_commit_name, gcf = cPickle.load(f)
+			if cached_commit_name!=current_commit_name:
+				return False
+			return gcf
 		except Exception as e:
 			warn("Failed to load pickled cache of Gnucash file " \
 					"'%s': %s" % (filepath, repr(e)))
@@ -52,7 +64,7 @@ def update_cache(filepath, gcf):
 		sys.setrecursionlimit(2000)
 	with open(cp,"w") as f:
 		try:
-			cPickle.dump(gcf,f)
+			cPickle.dump((get_commit_name(),gcf),f)
 		except RuntimeError as e:
 			warn("""Failed to dump a pickled version of the \
 gnucash file "%s" due to the RuntimeError below.  If this is a stack \
