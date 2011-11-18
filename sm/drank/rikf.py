@@ -27,14 +27,19 @@ def strip_line(line):
 
 class RikfErr(Exception):
 	def __str__(self):
-		return "while parsing '%s: %s'" % self.args
+		return "while parsing '%s' at line %s: %s" % self.args
 
 def open_rikf_ar(p):
 	with open(p) as f:
+		res = []
+		ln = 1
 		try:
-			return list(read_rikf(f))
+			for x in read_rikf(f):
+				ln += 1
+				res.append(x)
 		except csv.Error as e:
-			raise RikfErr(p, e)
+			raise RikfErr(p, ln+1, e)
+		return res
 
 
 def comment_stripper(f):
