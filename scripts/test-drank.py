@@ -1,4 +1,5 @@
 from koert.drank.core import BoozeDir, Count
+from koert.drank.reporting import EventReport
 from datetime import date
 import sys
 import os
@@ -45,10 +46,36 @@ def check_pricelists(args, bd):
 		print ""
 		print ""
 
+def check_events(args, bd):
+	pls = bd.pricelistdir.pricelists.values()
+	print ""
+	print ' -  --   ---     Checking Events     ---   --  - '
+	print ""
+	print ""
+	dates = bd.eventdir.events.keys()
+	_cmp = lambda x,y: 1 if x==None else -1 if y==None else  cmp(x,y)
+	dates.sort(cmp=_cmp)
+	for date in dates:
+		event = bd.eventdir.events[date]
+		tags = set()
+		if event.beertank_activity:
+			tags.add("beertank")
+		if event.btc!=None:
+			tags.add("btc")
+		if len(event.delivs)>0:
+			tags.add("deliv")
+		if len(event.shifts)>0:
+			tags.add("barform")
+		if len(event.invcounts)>0:
+			tags.add("invcount")
+		print "event on %s (%s):" % (event.date, ', '.join(tags))
+		for line in EventReport(event, bd).generate():
+			print "\t* "+line
 
 
 TESTS = {
-	"check-pricelists": check_pricelists
+	"pricelists": check_pricelists,
+	"events": check_events
 }
 
 
