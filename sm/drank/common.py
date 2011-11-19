@@ -8,5 +8,5 @@ class ManyMildErrs(MildErr):
 
 # raised when, e.g., product does not appear in productdir.
 class ObjDirErr(MildErr):
-	def __repr__(self):
+	def __str__(self):
 		return "Unknown %s: %s" % self.args

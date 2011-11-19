@@ -124,9 +124,9 @@ class ProductDir:
 		for line in ar:
 			try:
 				product = Product.from_line(line, self.boozedir)
-			except MildErr:
+			except MildErr as e:
 				errors.append(LoadErr("product", 
-					line, "parse error"))
+					line, e))
 				continue
 			handle = product.handle
 			if handle in products:
