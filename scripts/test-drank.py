@@ -1,4 +1,4 @@
-from koert.drank.core import BoozeDir, Count
+from koert.drank.boozedir import BoozeDir
 from koert.drank.reporting import EventReport
 from datetime import date
 import sys
@@ -75,7 +75,8 @@ def check_events(args, bd):
 
 TESTS = {
 	"pricelists": check_pricelists,
-	"events": check_events
+	"events": check_events,
+	"no": lambda *args,**kwargs: 42
 }
 
 
