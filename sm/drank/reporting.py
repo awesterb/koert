@@ -51,8 +51,8 @@ class EventReport:
 				yield "shiftnumber of barform #%s is not "  \
 					"1, 2 or 3" % (shift,)
 		i=0
-		j= (min([s for s in self.event.shifts if s!=None]) \
-				if len(self.event.shifts)>0 else 0) -1
+		nice_shifts = [s for s in self.event.shifts if s!=None]
+		j= (min(nice_shifts) if nice_shifts else 0) -1
 		while i<len(self.event.shifts) - (
 				1 if None in self.event.shifts else 0):
 			j += 1
@@ -71,6 +71,8 @@ class EventReport:
 		shifts = event.shifts
 		barforms = event.barforms
 		for i in shifts:
+			if i==None:
+				continue
 			if i+1 not in shifts:
 				continue
 			eb = barforms[i].endbal
