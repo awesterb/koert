@@ -85,6 +85,10 @@ class Commodity:
 	@property
 	def price(self):
 		return self.pricelist[self.product]
+
+	@property
+	def proper(self):
+		return self.product in self.pricelist.prices
 	
 	def __hash__(self):
 		return hash(self.product) ^ hash(self.pricelist)

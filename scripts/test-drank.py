@@ -26,6 +26,7 @@ def main():
 
 def check_pricelists(args, bd):
 	pls = bd.pricelistdir.pricelists.values()
+	cms = bd.commoditydir.commodities.values()
 	print ""
 	print ' -  --   ---     Checking Pricelists     ---   --  - '
 	print ""
@@ -33,16 +34,23 @@ def check_pricelists(args, bd):
 	print ""
 	print ""
 
-	unpriced = []
-	for prod in bd.productdir.products.values():
-		if [pl for pl in pls if (prod in pl.prices)]:
+	missing = {}
+	for c in cms:
+		if c.proper:
 			continue
-		unpriced.append(prod)
-	if unpriced:
-		print "____________________________________________________"
-		print "The following products do not occur in any pricelist:"
+		pl = c.pricelist
+		if pl not in missing:
+			missing[pl]=[]
+		missing[pl].append(c.product)
+	if missing:
+		print "__________________________________________"
+		print "The following pricelist miss some products:"
 		print ""
-		print ", ".join(map(str,unpriced))
+		for pl in missing:
+			print "%s" % (pl,)
+			print ""
+			print ", ".join(map(str,missing[pl]))
+			print ""
 		print ""
 		print ""
 
