@@ -22,6 +22,7 @@ class BoozeDir:
 		self.commoditydir = CommodityDir(self)
 		self.barformdir = BarFormDir(ospath.join(path,
 			"barforms"), self)
-		self.delivdir = DelivDir(ospath.join(path, 
-			"deliverance"), self)
+		self.delivdir = DelivDir(
+				ospath.join(path, "deliverance"), 
+				ospath.join(path, "board"), self)
 

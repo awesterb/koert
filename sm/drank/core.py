@@ -1,7 +1,7 @@
 from rikf import open_rikf_ar
 from count import Count
-from common import MildErr, ManyMildErrs, ObjDirErr, parse_int,\
-		load_kwargs
+from common import MildErr, ManyMildErrs, ObjDirErr, LoadErr, DoubleErr,\
+		parse_int, load_kwargs
 from event import EventDir
 
 import datetime
@@ -81,15 +81,6 @@ class Product:
 				continue
 			return self.factors[f]
 		return self.factors.constr(0)
-
-
-class LoadErr(MildErr):
-	def __repr__(self):
-		return "Failed to load %s '%s': %s" % self.args
-
-class DoubleErr(MildErr):
-	def __repr__(self):
-		return "This %s appears twice: %s" % self.args
 
 
 class ProductDir:

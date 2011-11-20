@@ -1,10 +1,12 @@
-from common import MildErr, parse_int, parse_date, parse_decimal, processFn
+from common import MildErr, LoadErr,\
+		parse_int, parse_date, parse_decimal, processFn
 from count import Count
 from rikf import open_rikf_ar
 
 import datetime
 from os import listdir
 from os import path as ospath
+from warnings import warn
 
 class Event:
 	def __init__(self, date):
@@ -298,11 +300,12 @@ class DelivErr(MildErr):
 		return "error concerning delivery %s:\n  %s" % self.args
 
 class Deliv:
-	def __init__(self, code, event, description, count):
+	def __init__(self, code, event, description, count, board=False):
 		self.code = code
 		self.event = event
 		self.description = description
 		self.count = count
+		self.board = board
 		self._beertank = None
 
 	def __repr__(self):
@@ -329,12 +332,12 @@ class Deliv:
 	
 
 	@classmethod
-	def from_path(cls, path, code, boozedir):
-		return cls.from_array(open_rikf_ar(path), code, boozedir)
+	def from_path(cls, path, code, boozedir, board):
+		return cls.from_array(open_rikf_ar(path), code, boozedir, board)
 
 
 	@classmethod
-	def from_array(cls, ar, code, boozedir):
+	def from_array(cls, ar, code, boozedir, board):
 		if len(ar)==0 or len(ar[0])==0:
 			raise MildErr("no title")
 		if ar[0][0].lower()!="levering":
@@ -352,27 +355,29 @@ class Deliv:
 				else None
 		view = boozedir.commoditydir.get_view(pricelist)
 		count = Count.from_array(ar[2:], view, parse_int)
-		return cls(code, event, description, count)
+		return cls(code, event, description, count, board)
 		
 
 
 
 class DelivDir:
-	def __init__(self, path, boozedir):
+	def __init__(self, deliv_path, board_path, boozedir):
 		self.delivs = {}
 		self.boozedir = boozedir
-		self.path = path
-		self._load_delivs()
+		self.deliv_path = deliv_path
+		self.board_path = board_path
+		self._load_delivs(deliv_path, False)
+		self._load_delivs(board_path, True)
 
 	
-	def _load_delivs(self):
+	def _load_delivs(self, path, board):
 		errors = []
-		for fn in listdir(self.path):
+		for fn in listdir(path):
 			comps, ignore = processFn(fn)
 			if ignore:
 				continue
 			try:
-				d = self._load_deliv(fn, comps)
+				d = self._load_deliv(path, fn, comps, board)
 				d.event.register_deliv(d)
 			except MildErr as me:
 				errors.append(LoadErr("delivery", fn, me))
@@ -382,13 +387,13 @@ class DelivDir:
 			warn("Failed to load some deliveries: \n\t%s"
 					% '\n\t'.join(map(repr, errors)))
 	
-	def _load_deliv(self, fn, comps):
-		path = ospath.join(self.path, fn)
+	def _load_deliv(self, dpath, fn, comps, board):
+		path = ospath.join(dpath, fn)
 		code = ".".join(comps[0:-1])
 		if code in self.delivs:
 			raise MildErr("delivery with this "
 					"name already exists.")
-		return Deliv.from_path(path, code, self.boozedir)
+		return Deliv.from_path(path, code, self.boozedir, board)
 
 	def __getitem__(self, code):
 		if code not in self.delivs:

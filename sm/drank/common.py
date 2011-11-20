@@ -8,6 +8,15 @@ class MildErr(Exception):
 class ManyMildErrs(MildErr):
 	pass
 
+class LoadErr(MildErr):
+	def __repr__(self):
+		return "Failed to load %s '%s': %s" % self.args
+
+class DoubleErr(MildErr):
+	def __repr__(self):
+		return "This %s appears twice: %s" % self.args
+
+
 # raised when, e.g., product does not appear in productdir.
 class ObjDirErr(MildErr):
 	def __str__(self):
