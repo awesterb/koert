@@ -1,5 +1,7 @@
 import itertools
 
+from pricelist import PriceListErr
+
 class EventReport:
 	def __init__(self, event, boozedir):
 		self.event = event
@@ -9,7 +11,8 @@ class EventReport:
 		return itertools.chain(self._check_shifts(),
 				self._compare_deliv_with_btcs(),
 				self._compare_bt_used_with_turfed(),
-				self._check_shifts_bal())
+				self._check_shifts_bal(),
+				self._compare_turfed_with_cashed())
 
 	def _compare_deliv_with_btcs(self):
 		e = self.event
@@ -82,3 +85,23 @@ class EventReport:
 						" from starting balance of the"\
 						" following shift: %s and %s"\
 						% (i, eb, sb)
+	
+	def _compare_turfed_with_cashed(self):
+		event = self.event
+		barforms = event.barforms.values()
+		for bf in barforms:
+			try:
+				at = bf.amount_turfed
+				ac = bf.amount_cashed
+			except PriceListErr:
+				yield "could not determine the amount turfed"\
+						" of barform %s (shift %s)"\
+						" due to a missing price"\
+						% (bf,bf.shift)
+				continue
+			if at == ac:
+				continue
+			yield "amount turfed of barform %s (shift %s)"\
+					" being %s differs from the"\
+					" amount cashed: %s" \
+						% (bf.shift, at, ac)

@@ -123,6 +123,9 @@ class BarForm:
 		self.sell_count = sell_count
 		self.number = number
 		self.pricelist = pricelist
+	
+	def __str__(self):
+		return "bf%s" % (self.number,)
 
 	@classmethod
 	def from_path(cls, path, number, boozedir):
@@ -170,6 +173,14 @@ class BarForm:
 				continue
 			amount += pbt * self.sell_count[com]
 		return amount
+
+	@property
+	def amount_turfed(self):
+		return self.sell_count.total(lambda c: c.price)
+
+	@property
+	def amount_cashed(self):
+		return self.endbal - self.startbal
 
 
 class BarFormDir:
