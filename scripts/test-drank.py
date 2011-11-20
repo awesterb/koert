@@ -47,6 +47,8 @@ def check_pricelists(args, bd):
 		print "The following pricelist miss some products:"
 		print ""
 		for pl in missing:
+			_cmp = lambda p,q: cmp(p.handle, q.handle)
+			missing[pl].sort(cmp = _cmp)
 			print "%s" % (pl,)
 			print ""
 			print ", ".join(map(str,missing[pl]))
