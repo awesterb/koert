@@ -52,6 +52,9 @@ class Count:
 	def __getitem__(self, item):
 		return self.countlets[item]
 
+	def get(self, k, d=None):
+		return self.countlets.get(k,d)
+
 	def __contains__(self, item):
 		return item in self.countlets
 
