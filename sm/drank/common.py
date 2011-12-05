@@ -51,15 +51,13 @@ def parse_date(date_str):
 #   returns these and whether to ignore the file.
 def processFn(fn):
 	comps = fn.split(".")
-	if len(fn)==0:
+	# ignore ".hidden" files
+	if len(comps)==0 or comps[0]=="": 
 		return comps, True
-	if fn[0]==".":
+	if comps[0] in ('template','example'):
 		return comps, True
-	if len(comps)>1:
-		if comps[-1][-1]=="~" or comps[-1][-1]=="swp":
-			return comps, True
-		if comps[0] in ('template','example'):
-			return comps, True
+	if comps[-1] not in ("csv",):
+		return comps, True
 	return comps, False
 
 # ["a=b",...], a=A, ...  -> {"a":A(b), ...}
