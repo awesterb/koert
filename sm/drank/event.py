@@ -177,6 +177,11 @@ class BarForm:
 		return amount
 
 	@property
+	def total_factors(self):
+		return self.sell_count.map(
+				lambda c,n: c.product.factors.scale(n).items)
+
+	@property
 	def amount_turfed(self):
 		return self.sell_count.total(lambda c: c.price)
 
@@ -191,6 +196,7 @@ class BarFormDir:
 		self.boozedir = boozedir
 		self.path = path
 		self._total_sold = None
+		self._total_factors = None
 		self._load_barforms()
 	
 	@property
@@ -200,6 +206,14 @@ class BarFormDir:
 				for bf in self.barforms.itervalues()],
 				Count.zero(parse_int))
 		return self._total_sold
+
+	@property
+	def total_factors(self):
+		if self._total_factors==None:
+			self._total_factors = sum([bf.total_factors
+				for bf in self.barforms.itervalues()],
+				Count.zero(int))
+		return self._total_factors
 	
 	def _load_barforms(self):
 		self.barforms = {}
