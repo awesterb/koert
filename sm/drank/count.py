@@ -13,7 +13,21 @@ class Count:
 	def map(self, f, comb=lambda x,y: sum((x,y))):
 		res = dict()
 		for item in self.countlets.iteritems():
-			for k,v in f(*item):
+			new_items = f(*item)
+			try:
+				new_items = list(new_items)
+			except Exception as e:
+				raise ValueError("%r should be a list of "
+						"new items.  (%s)" 
+						% (new_items, e))
+			for new_item in new_items:
+				try:
+					k,v = new_item
+				except Exception as e:
+					raise ValueError("%r should be a pair;"
+							" an item to be added."
+							" (%s)" 
+							% (new_item, e))
 				if k in res:
 					res[k] = comb(res[k],v)
 				else:
