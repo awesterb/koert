@@ -34,6 +34,13 @@ class Count:
 					res[k] = v
 		return Count(res, self.constr)
 
+	@property
+	def items(self):
+		return self.countlets.iteritems()
+
+	def scale(self, n):
+		return self.map(lambda k,v: ((k,v*n),) )
+
 	def total(self, f=lambda x:x, zero=0):
 		return sum([f(obj) * self.countlets[obj] 
 			for obj in self.countlets], zero)
