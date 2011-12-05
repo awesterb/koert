@@ -1,4 +1,5 @@
-from common import MildErr, processFn, parse_decimal
+from common import MildErr, LoadErr,\
+		processFn, parse_decimal
 from count import Count
 from rikf import open_rikf_ar
 
