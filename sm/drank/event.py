@@ -371,6 +371,10 @@ class Deliv:
 		count = Count.from_array(ar[2:], view, parse_int)
 		return cls(code, event, description, count, board)
 		
+	@property
+	def total_factors(self):
+		return self.count.map(
+				lambda c,n: c.product.factors.scale(n).items)
 
 
 
@@ -382,6 +386,7 @@ class DelivDir:
 		self.board_path = board_path
 		self._load_delivs(deliv_path, False)
 		self._load_delivs(board_path, True)
+		self._total_factors = None
 
 	
 	def _load_delivs(self, path, board):
@@ -416,3 +421,11 @@ class DelivDir:
 
 	def __iter__(self):
 		return iter(self.delivs.itervalues())
+	
+	@property
+	def total_factors(self):
+		if self._total_factors==None:
+			self._total_factors = sum([bf.total_factors
+				for bf in self.delivs.itervalues()],
+				Count.zero(parse_int))
+		return self._total_factors
