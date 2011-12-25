@@ -9,6 +9,34 @@ from os import listdir
 from os import path as ospath
 from warnings import warn
 
+class Shift:
+	def __init__(self, number=None, label=None):
+		self.number = number
+		self.label = label
+	
+	def __repr__(self):
+		return "Shift(%s,%s)" % (self.number, self.label)
+
+	def __str__(self):
+		res = str(self.number) if self.number else "?"
+		if self.label:
+			res += " (%s)" % (self.label,)
+		return res
+
+	@classmethod
+	def from_str(cls, s):
+		# The grammar:  <number>[/<label>]
+		s = s.strip()
+		if not s:
+			return cls()
+		parts = s.split("/",1)
+		number = parse_int(parts[0])
+		if len(parts)==1:
+			return cls(number)
+		label = parts[1]
+		return cls(number,label)
+
+
 class Event:
 	def __init__(self, date):
 		self.date = date
@@ -148,8 +176,7 @@ class BarForm:
 		pricelist = boozedir.pricelistdir[pricelist_str]
 		date = parse_date(header[1])
 		counter = header[2]
-		shift_str = header[3]
-		shift = parse_int(header[3]) if shift_str!="" else None
+		shift = Shift.from_str(header[3])
 		startbal = parse_decimal(header[4])
 		endbal = parse_decimal(header[5])
 		# below, to translate "product@pricelist" to a commodity

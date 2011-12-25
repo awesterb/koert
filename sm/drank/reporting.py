@@ -8,10 +8,10 @@ class EventReport:
 		self.boozedir = boozedir
 	
 	def generate(self):
-		return itertools.chain(self._check_shifts(),
+		return itertools.chain(#self._check_shifts(),
 				self._compare_deliv_with_btcs(),
 				self._compare_bt_used_with_turfed(),
-				self._check_shifts_bal(),
+				#self._check_shifts_bal(),
 				self._compare_turfed_with_cashed())
 
 	def _compare_deliv_with_btcs(self):
@@ -44,6 +44,9 @@ class EventReport:
 					" used=%s, turfed=%s" % (u,c)
 
 	def _check_shifts(self):
+		raise NotImplementedError()
+		# TODO: This code still assumes Barform.shift is an int
+		# instead of a Shift-instance
 		shifts = self.event.shifts
 		for shift in shifts:
 			if shift==None:
@@ -70,6 +73,9 @@ class EventReport:
 				bf.number, bf.date, bf.counter)
 	
 	def _check_shifts_bal(self):
+		raise NotImplementedError()
+		# TODO: This code still assumes Barform.shift is an int
+		# instead of a Shift-instance
 		event = self.event
 		shifts = event.shifts
 		barforms = event.barforms
