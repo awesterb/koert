@@ -1,6 +1,7 @@
 from core import FactorDir, ProductDir
 from event import EventDir, InvCountDir, BarFormDir, DelivDir
 from pricelist import PriceListDir, CommodityDir
+from weight import WeightDir
 
 from os import path as ospath
 
@@ -15,6 +16,8 @@ class BoozeDir:
 			"factor_catalog.csv"))
 		self.productdir = ProductDir(ospath.join(path, 
 			"product_catalog.csv"), self)
+		self.weightdir = WeightDir(ospath.join(path,
+			"weights.csv"), self)
 		self.invcountdir = InvCountDir(ospath.join(path,
 			"inventory"), self)
 		self.pricelistdir = PriceListDir(ospath.join(path,

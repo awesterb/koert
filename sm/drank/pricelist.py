@@ -2,6 +2,7 @@ from common import MildErr, LoadErr, ObjDirErr,\
 		processFn, parse_decimal
 from count import Count
 from rikf import open_rikf_ar
+from amount import parse_amount
 
 from os import listdir
 from os import path as ospath
@@ -37,7 +38,7 @@ class PriceList:
 				ar[0][0].lower()!="prijslijst":
 			raise MildErr("Missing 'prijslijst' title")
 		prices = Count.from_array(ar[1:], boozedir.productdir,
-				parse_decimal)
+				parse_amount)
 		return cls(name=name,prices=prices)
 
 

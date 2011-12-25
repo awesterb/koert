@@ -3,6 +3,7 @@ from count import Count
 from common import MildErr, ManyMildErrs, ObjDirErr, LoadErr, DoubleErr,\
 		parse_int, load_kwargs
 from event import EventDir
+from amount import parse_amount
 
 import datetime
 from os import listdir, path as ospath
@@ -35,6 +36,7 @@ class Product:
 		self.handle = handle
 		self.name = name
 		self.factors = factors
+		self.weight = None
 	
 	@classmethod
 	def from_line(cls, line, boozedir):
@@ -63,7 +65,7 @@ class Product:
 			raise MildErr("product %s (%s) has no factors" 
 					% (handle, name))
 		return cls(handle=handle, name=name, 
-				factors=Count(factors, parse_int))
+				factors=Count(factors, parse_amount))
 
 	def __repr__(self):
 		return self.handle
@@ -80,7 +82,27 @@ class Product:
 			if not f.beertank:
 				continue
 			return self.factors[f]
-		return self.factors.constr(0)
+		return self.factors.constr()
+
+
+	#
+	#  COMMANDS
+	#
+	def parse_gewogen(self, args_str):
+		weighed = parse_int(args_str)
+		if self.weight==None:
+			raise MildErr("missing weight for %r" % self)
+		return self.weight.weighed_to_fraction(weighed)
+
+	COMMANDS = {
+			"gewogen" : parse_gewogen
+	}
+
+	def parse_command(self, command, args_str):
+		if command not in Product.COMMANDS:
+			raise MildErr("Unknown command %r for Product"
+					% (command,))
+		return Product.COMMANDS[command](self,args_str)
 
 
 class ProductDir:

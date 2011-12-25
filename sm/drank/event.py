@@ -2,6 +2,7 @@ from common import MildErr, LoadErr, ObjDirErr,\
 		parse_int, parse_date, parse_decimal, processFn
 from count import Count
 from rikf import open_rikf_ar
+from amount import parse_amount
 
 import datetime
 from os import listdir
@@ -103,7 +104,7 @@ class EventDir:
 			raise MildErr("beertankcount.csv has faulty header: "
 					"%s" % ar[0])
 		count = Count.from_array(ar[1:], boozedir.eventdir,
-				parse_int)
+				parse_amount)
 		for event in count.countlets.iterkeys():
 			event.register_btc(count[event])
 		return count
@@ -154,7 +155,7 @@ class BarForm:
 		# below, to translate "product@pricelist" to a commodity
 		commodity_view = boozedir.commoditydir.get_view(pricelist)
 		sell_count = Count.from_array(ar[2:], commodity_view, 
-				parse_int)
+				parse_amount)
 		event = boozedir.eventdir[date]
 		return cls(event=event, counter=counter, shift=shift,
 				startbal=startbal, endbal=endbal,
@@ -204,7 +205,7 @@ class BarFormDir:
 		if self._total_sold==None:
 			self._total_sold = sum([bf.sell_count 
 				for bf in self.barforms.itervalues()],
-				Count.zero(parse_int))
+				Count.zero(parse_amount))
 		return self._total_sold
 
 	@property
@@ -266,7 +267,7 @@ class InvCount:
 		date = parse_date(header[0])
 		event = boozedir.eventdir[date]
 		count = Count.from_array(ar[2:], boozedir.productdir, 
-				parse_decimal)
+				parse_amount)
 		return cls(code, event, count)
 
 
@@ -368,7 +369,7 @@ class Deliv:
 		description = header[2].lower() if len(header)>=3 \
 				else None
 		view = boozedir.commoditydir.get_view(pricelist)
-		count = Count.from_array(ar[2:], view, parse_int)
+		count = Count.from_array(ar[2:], view, parse_amount)
 		return cls(code, event, description, count, board)
 		
 	@property
@@ -427,5 +428,5 @@ class DelivDir:
 		if self._total_factors==None:
 			self._total_factors = sum([bf.total_factors
 				for bf in self.delivs.itervalues()],
-				Count.zero(parse_int))
+				Count.zero(parse_amount))
 		return self._total_factors

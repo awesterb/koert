@@ -99,17 +99,15 @@ class Count:
 		if(obj_str==""):
 			raise NoObjStrErr()
 		obj = objdir[obj_str]
-		amount = None
-		if len(line)==1:
-			amount = 0
-		else:
-			amount_str = line[1]
-			try:
-				amount = 0 if amount_str=="" \
-						else constr(amount_str)
-			except ValueError:
-				raise MildErr("could not parse amount: '%s'" \
-						% amount_str)
+		kwargs = {"obj": obj}
+		if len(line)>1:
+			kwargs["s"] = line[1]
+		try:
+			amount = constr(**kwargs)
+		except Exception as e:
+			raise MildErr("could not parse amount '%s' "
+					"of object '%r': %s" 
+					% (line, obj, e))
 		return obj, amount
 
 	def __add__(self, other):
