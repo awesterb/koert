@@ -111,4 +111,4 @@ class EventReport:
 			yield "amount turfed of barform %s (shift %s)"\
 					" being %s differs from the"\
 					" amount cashed: %s" \
-						% (bf.shift, at, ac)
+						% (bf, bf.shift, at, ac)
