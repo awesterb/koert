@@ -115,7 +115,7 @@ class Count:
 		for a in (self, other):
 			for obj in a.countlets.iterkeys():
 				if obj not in countlets:
-					countlets[obj] = self.constr(0)
+					countlets[obj] = self.constr()
 				countlets[obj] += a[obj]
 		return Count(countlets=countlets, constr=self.constr)
 	
