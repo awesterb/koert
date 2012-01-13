@@ -99,11 +99,12 @@ class EventReport:
 			try:
 				at = bf.amount_turfed
 				ac = bf.amount_cashed
-			except PriceListErr:
+			except PriceListErr as e:
 				yield "could not determine the amount turfed"\
 						" of barform %s (shift %s)"\
-						" due to a missing price"\
-						% (bf,bf.shift)
+						" due to a missing price: "\
+						" %s"\
+						% (bf,bf.shift, e)
 				continue
 			if at == ac:
 				continue
