@@ -149,8 +149,8 @@ class BarForm:
 		self.event = event
 		self.counter = counter
 		self.shift = shift
-		self.startbal = startbal
-		self.endbal = endbal
+		self.startbal = int(startbal*100)
+		self.endbal = int(endbal*100)
 		self.sell_count = sell_count
 		self.number = number
 		self.pricelist = pricelist
