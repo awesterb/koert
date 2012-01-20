@@ -69,8 +69,8 @@ class EventReport:
 		m = min(nice_shifts)
 		M = max(nice_shifts)
 		if m > 1:
-			yield "first shift with label %s has number %s" \
-					% (l,m)
+			yield "first shift with label %s has number %s (%s)" \
+					% (l,m,barforms[m])
 		for i in xrange(m,M+1):
 			if i in barforms:
 				continue
