@@ -8,6 +8,7 @@ import datetime
 from os import listdir
 from os import path as ospath
 from warnings import warn
+from decimal import Decimal
 
 class Shift:
 	def __init__(self, number=None, label=None):
@@ -64,10 +65,12 @@ class Event:
 		l = shift.label
 		if l not in self.barforms:
 			self.barforms[l] = dict()
+		n = shift.number
 		if shift.number in self.barforms[l]:
-			raise MildErr("shift already taken: %s at %s" 
-					% (shift, self.date))
-		self.barforms[l][shift.number] = barform
+			raise MildErr("shift already taken: %s at %s by %s" 
+					% (shift, self.date, 
+						self.barforms[l][n]))
+		self.barforms[l][n] = barform
 
 	def register_btc(self, btc):
 		if self.btc != None:
@@ -154,7 +157,7 @@ class EventDir:
 
 class BarForm:
 	def __init__(self, event, counter, shift, sell_count, 
-			startbal, endbal, number, pricelist):
+			startbal, endbal, number, pricelist, mutation):
 		self.event = event
 		self.counter = counter
 		self.shift = shift
@@ -163,6 +166,7 @@ class BarForm:
 		self.sell_count = sell_count
 		self.number = number
 		self.pricelist = pricelist
+		self.mutation = mutation
 	
 	def __str__(self):
 		return "bf%s" % (self.number,)
@@ -179,7 +183,12 @@ class BarForm:
 		if len(ar)==1 or len(ar[1])<6:
 			raise MildErr("Incomplete/missing header")
 		# header:
-		#   pricelist; date ; counter ; shift# ; startbal ; endbal
+		#   pricelist; date ; counter ; shift# ; 
+		#        startbal ; endbal [; mutation ]
+		#
+		# Here: mutation the amount transferred to the
+		# cash register during the shift.  For istance,
+		# an "afroming" during a shift would lower this number.
 		header = ar[1]
 		pricelist_str = header[0]
 		pricelist = boozedir.pricelistdir[pricelist_str]
@@ -188,6 +197,8 @@ class BarForm:
 		shift = Shift.from_str(header[3])
 		startbal = parse_decimal(header[4])
 		endbal = parse_decimal(header[5])
+		mutation = parse_decimal(header[6]) if len(header)>6 \
+				else Decimal(0)
 		# below, to translate "product@pricelist" to a commodity
 		commodity_view = boozedir.commoditydir.get_view(pricelist)
 		sell_count = Count.from_array(ar[2:], commodity_view, 
@@ -196,7 +207,8 @@ class BarForm:
 		return cls(event=event, counter=counter, shift=shift,
 				startbal=startbal, endbal=endbal,
 				sell_count=sell_count, number=number,
-				pricelist=pricelist)
+				pricelist=pricelist,
+				mutation=mutation)
 
 	@property
 	def date(self):
@@ -224,7 +236,7 @@ class BarForm:
 
 	@property
 	def amount_cashed(self):
-		return self.endbal - self.startbal
+		return self.endbal - self.startbal - self.mutation
 
 
 class BarFormDir:
