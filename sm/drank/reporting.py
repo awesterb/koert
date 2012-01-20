@@ -8,11 +8,13 @@ class EventReport:
 		self.boozedir = boozedir
 	
 	def generate(self):
-		return itertools.chain(#self._check_shifts(),
+		return itertools.chain(
+				self._check_shifts(),
 				self._compare_deliv_with_btcs(),
 				self._compare_bt_used_with_turfed(),
 				#self._check_shifts_bal(),
-				self._compare_turfed_with_cashed())
+				self._compare_turfed_with_cashed()
+				)
 
 	def _compare_deliv_with_btcs(self):
 		e = self.event
@@ -44,31 +46,38 @@ class EventReport:
 					" used=%s, turfed=%s" % (u,c)
 
 	def _check_shifts(self):
-		raise NotImplementedError()
-		# TODO: This code still assumes Barform.shift is an int
-		# instead of a Shift-instance
-		shifts = self.event.shifts
+		for l in self.event.barforms.iterkeys():
+			shifts = self.event.barforms[l].keys()
+			barforms = self.event.barforms[l]
+			for r in self._check_shifts_with_label(\
+					l, shifts, barforms):
+				yield r
+
+	def _check_shifts_with_label(self, l, shifts, barforms):
+		# Check the number of the shift.
 		for shift in shifts:
 			if shift==None:
-				for line in self._on_None_shift():
+				for line in self._on_None_shift(barforms):
 					yield line
 				continue
-			if shift not in (1,2,3):
+			if shift not in (0,1,2,3):
 				yield "shiftnumber of barform #%s is not "  \
-					"1, 2 or 3" % (shift,)
-		i=0
-		nice_shifts = [s for s in self.event.shifts if s!=None]
-		j= (min(nice_shifts) if nice_shifts else 0) -1
-		while i<len(self.event.shifts) - (
-				1 if None in self.event.shifts else 0):
-			j += 1
-			if j in self.event.barforms:
-				i += 1
+					"0, 1, 2 or 3" % (shift,)
+		nice_shifts = [s for s in shifts if s!=None]
+		if not nice_shifts:
+			return
+		m = min(nice_shifts)
+		M = max(nice_shifts)
+		if m > 1:
+			yield "first shift with label %s has number %s" \
+					% (l,m)
+		for i in xrange(m,M+1):
+			if i in barforms:
 				continue
-			yield "missing barform for shift #%s" % j
+			yield "missing barform for shift %s/%s" % (l,i)
 			
-	def _on_None_shift(self):
-		bf = self.event.barforms[None]
+	def _on_None_shift(self, barforms):
+		bf = barforms[None]
 		yield "barform #%s of %s signed by %s has no shift number" % (
 				bf.number, bf.date, bf.counter)
 	
@@ -94,7 +103,7 @@ class EventReport:
 	
 	def _compare_turfed_with_cashed(self):
 		event = self.event
-		barforms = event.barforms.values()
+		barforms = event.all_barforms
 		for bf in barforms:
 			try:
 				at = bf.amount_turfed
@@ -106,9 +115,13 @@ class EventReport:
 						" %s"\
 						% (bf,bf.shift, e)
 				continue
-			if at == ac:
-				continue
-			yield "amount turfed of barform %s (shift %s)"\
-					" being %s differs from the"\
-					" amount cashed: %s" \
-						% (bf, bf.shift, at, ac)
+
+			extra = ""
+			if at:  # is not zero
+				dq = (ac-at) / at
+				if abs(dq)*10<1:
+					continue
+				extra = ", which is %.0f%% more" % (dq*100,)
+			yield "%s (shift %s)"\
+					" turfed %s, but cached %s%s"\
+						% (bf, bf.shift, at, ac, extra)

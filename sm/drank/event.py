@@ -52,13 +52,22 @@ class Event:
 	def __str__(self):
 		return "@"+("unspecified-time"
 				if self.date==None else str(self.date))
+
+	@property
+	def all_barforms(self):
+		for l in self.barforms:
+			for i in self.barforms[l]:
+				yield self.barforms[l][i]
 	
 	def register_barform(self, barform):
 		shift = barform.shift
-		if shift in self.barforms:
+		l = shift.label
+		if l not in self.barforms:
+			self.barforms[l] = dict()
+		if shift.number in self.barforms[l]:
 			raise MildErr("shift already taken: %s at %s" 
 					% (shift, self.date))
-		self.barforms[shift] = barform
+		self.barforms[l][shift.number] = barform
 
 	def register_btc(self, btc):
 		if self.btc != None:
@@ -84,7 +93,7 @@ class Event:
 	def beertank_turfed(self):
 		if self._beertank_turfed==None:
 			self._beertank_turfed = sum([bf.beertank 
-				for bf in self.barforms.itervalues()])
+				for bf in self.all_barforms])
 		return self._beertank_turfed
 
 	# returns the amount of bt-factors delivered to the beertank
@@ -231,7 +240,7 @@ class BarFormDir:
 	def total_sold(self):
 		if self._total_sold==None:
 			self._total_sold = sum([bf.sell_count 
-				for bf in self.barforms.itervalues()],
+				for bf in self.all_barforms],
 				Count.zero(parse_amount))
 		return self._total_sold
 
@@ -239,7 +248,7 @@ class BarFormDir:
 	def total_factors(self):
 		if self._total_factors==None:
 			self._total_factors = sum([bf.total_factors
-				for bf in self.barforms.itervalues()],
+				for bf in self.all_barforms],
 				Count.zero(int))
 		return self._total_factors
 	
