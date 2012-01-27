@@ -12,7 +12,7 @@ class EventReport:
 				self._check_shifts(),
 				self._compare_deliv_with_btcs(),
 				self._compare_bt_used_with_turfed(),
-				#self._check_shifts_bal(),
+				self._check_shifts_bal(),
 				self._compare_turfed_with_cashed()
 				)
 
@@ -81,13 +81,17 @@ class EventReport:
 		yield "barform #%s of %s signed by %s has no shift number" % (
 				bf.number, bf.date, bf.counter)
 	
+
 	def _check_shifts_bal(self):
-		raise NotImplementedError()
-		# TODO: This code still assumes Barform.shift is an int
-		# instead of a Shift-instance
+		for l in self.event.barforms.iterkeys():
+			shifts = self.event.barforms[l].keys()
+			barforms = self.event.barforms[l]
+			for r in self._check_shifts_bal_with_label(\
+					l, shifts, barforms):
+				yield r
+
+	def _check_shifts_bal_with_label(self, l, shifts, barforms):
 		event = self.event
-		shifts = event.shifts
-		barforms = event.barforms
 		for i in shifts:
 			if i==None:
 				continue
@@ -96,10 +100,12 @@ class EventReport:
 			eb = barforms[i].endbal
 			sb = barforms[i+1].startbal
 			if eb!=sb:
-				yield "ending balance of shift #%s differs"\
+				yield "ending balance of shift #%s/%s differs"\
 						" from starting balance of the"\
 						" following shift: %s and %s"\
-						% (i, eb, sb)
+						" (diff %s, %s%%)" \
+						% (l, i, eb, sb, eb-sb,
+								100*(eb-sb)/eb)
 	
 	def _compare_turfed_with_cashed(self):
 		event = self.event
