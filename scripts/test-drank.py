@@ -85,10 +85,38 @@ def check_events(args, bd):
 		for line in EventReport(event, bd).generate():
 			print "\t* "+line
 
+def check_barforms(args, bd):
+	print ""
+	print ' -  --   ---     Checking Barforms     ---   --  - '
+	print ""
+	print ""
+	barforms = bd.barformdir.barforms
+	codes = barforms.keys()
+	check_barforms_numbering(args, bd, barforms, codes)
+
+def check_barforms_numbering(args, bd, barforms, codes):
+	intcodes = map(int, barforms.keys())
+	m = min(intcodes)
+	M = max(intcodes)
+	print "Codes range from %s to %s." % (m,M)
+	if len(intcodes) == M+1 - m:
+		print "No barforms seem to be missing."
+		return
+	print "Some barforms are missing:"
+	print "\tOne expects %s barforms in total" % (M+1-m,)
+	print "\tbut there are only %s barforms." % (len(intcodes),)
+	print
+	print "Indeed, the following codes are not present: "
+	ics = set(intcodes)
+	for i in xrange(m,M+1):
+		if i not in ics:
+			print "\t%s" % (str(i),)
+
 
 TESTS = {
 	"pricelists": check_pricelists,
 	"events": check_events,
+	"barforms": check_barforms,
 	"no": lambda *args,**kwargs: 42
 }
 
