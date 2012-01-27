@@ -40,14 +40,17 @@ class Program:
 		factors = self.bd.factordir.factors.itervalues()
 		barf = self.bd.barformdir.total_factors
 		deliv = self.bd.delivdir.total_factors
-		_format = "%30s %8s %8s %8s"
+		_format = "%30s %8s %8s %8s %5s"
 		
 		print _format % ("FACTOR", "GETURFT", 
-				"GEKOCHT", "RESULTAAT")
+				"GEKOCHT", "RESULTAAT", "%TRF")
 		for f in factors:
 			fb = barf.get(f,0)
 			fd = deliv.get(f,0)
-			print _format % (f.handle, fb, fd, fd-fb)
+			perc = "--" 
+			if fb:
+				perc = "%.0f" % ((fd-fb)/fb*100,)
+			print _format % (f.handle, fb, fd, fd-fb, perc)
 
 if __name__=="__main__":
 	Program()

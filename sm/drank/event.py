@@ -260,7 +260,7 @@ class BarFormDir:
 	def total_factors(self):
 		if self._total_factors==None:
 			self._total_factors = sum([bf.total_factors
-				for bf in self.all_barforms],
+				for bf in self.barforms.values()],
 				Count.zero(int))
 		return self._total_factors
 	
