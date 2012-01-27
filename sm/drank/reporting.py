@@ -119,7 +119,7 @@ class EventReport:
 			extra = ""
 			if at:  # is not zero
 				dq = (ac-at) / at
-				if abs(dq)*10<1:
+				if abs(dq)*100<15:
 					continue
 				extra = ", which is %.0f%% more" % (dq*100,)
 			yield "%s (shift %s)"\
