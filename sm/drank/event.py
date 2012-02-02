@@ -44,7 +44,7 @@ class Event:
 		self.barforms = {}
 		self.btc = None
 		self.delivs = set()
-		self.invcounts = set()
+		self.invcount = None
 		self.bt_deliv = None
 		self._beertank_event = None
 		self._beertank_turfed = None
@@ -86,7 +86,10 @@ class Event:
 			self.bt_deliv = deliv
 	
 	def register_invcount(self, ic):
-		self.invcounts.add(ic)
+		if self.invcount:
+			raise MildErr("double registration of invcount: "\
+					"%s and %s" % (self.invcount, ic))
+		self.invcount = ic
 	
 	@property
 	def shifts(self):
@@ -120,6 +123,7 @@ class Event:
 class EventDir:
 	def __init__(self):
 		self.events = {}
+		self.periods = []
 	
 	def __getitem__(self, date):
 		if isinstance(date,str):
@@ -153,6 +157,77 @@ class EventDir:
 		for ev in self.events.itervalues():
 			if start <= ev.date <= end:
 				yield ev
+	
+	def create_periods(self):
+		dates =  self.events.keys()
+		dates.sort()
+		# indices of dates with an inventory count
+		idcs = [i for i in range(len(dates)) 
+				if self.events[dates[i]].invcount]
+		N = len(idcs)-1  # number of periods
+		if N == -1:
+			self.periods = []
+			return
+		periods = [None] * N
+		for n in xrange(N):
+			start_idx = idcs[n]
+			end_idx = idcs[n+1]
+			start_ic = self.events[dates[start_idx]].invcount
+			end_ic = self.events[dates[end_idx]].invcount
+			p_idcs = range(start_idx, end_idx+1)
+			p_events = map(lambda idx: self.events[dates[idx]],
+					p_idcs)
+			periods[n] = Period(n, start_ic, end_ic, p_events)
+		self.periods = periods
+
+
+# A period between two inventory counts,
+# which is like an accounting period;
+# the start and ending inventory counts act as starting and closing balance.
+class Period:
+	def __init__(self, number, start_ic, end_ic, events):
+		self.start_ic = start_ic
+		self.end_ic = end_ic
+		self.number = number
+		self.events = dict()
+		for event in events:
+			self.events[event.date] = event
+		self._ftallied = None
+		self._fdelivered = None
+	
+	@property
+	def start_date(self):
+		return self.start_ic.event.date
+
+	@property
+	def end_date(self):
+		return self.end_ic.event.date
+
+	def __str__(self):
+		return "Period #%s %s -- %s" % (self.number,
+				self.start_date, self.end_date)
+
+	@property
+	def barforms(self):
+		for event in self.events.itervalues():
+			for bf in event.all_barforms:
+				yield bf
+	
+	@property
+	def delivs(self):
+		for event in self.events.itervalues():
+			for dl in event.delivs:
+				yield dl
+
+	@property
+	def ftallied(self):
+		return sum(map(lambda bf: bf.total_factors, self.barforms),
+				Count.zero(parse_amount))
+	
+	@property
+	def fdelivered(self):
+		return sum(map(lambda dl: dl.total_factors, self.delivs),
+				Count.zero(parse_amount))
 
 
 class BarForm:
@@ -297,6 +372,9 @@ class InvCount:
 		self.code = code
 		self.event = event
 		self.count = count
+	
+	def __str__(self):
+		return self.code
 	
 	@classmethod
 	def from_path(cls, path, code, boozedir):

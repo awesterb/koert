@@ -20,6 +20,7 @@ class BoozeDir:
 			"weights.csv"), self)
 		self.invcountdir = InvCountDir(ospath.join(path,
 			"inventory"), self)
+		self.eventdir.create_periods()
 		self.pricelistdir = PriceListDir(ospath.join(path,
 			"pricelists"), self)
 		self.commoditydir = CommodityDir(self)
