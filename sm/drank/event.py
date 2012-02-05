@@ -175,7 +175,7 @@ class EventDir:
 			end_idx = idcs[n+1]
 			start_ic = self.events[dates[start_idx]].invcount
 			end_ic = self.events[dates[end_idx]].invcount
-			p_idcs = range(start_idx, end_idx+1)
+			p_idcs = range(start_idx, end_idx)
 			p_events = map(lambda idx: self.events[dates[idx]],
 					p_idcs)
 			periods[n] = Period(n, start_ic, end_ic, p_events)

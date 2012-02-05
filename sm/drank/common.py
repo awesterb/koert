@@ -61,7 +61,8 @@ class Moment:
 		self.number = number
 	
 	def __str__(self):
-		first = self.date.strftime("%Y-%m-%d") if self.date else "?"
+		first = self.date.strftime("%a %W %Y-%m-%d")  \
+			if self.date else "?"
 		if self.number:
 			return "%s/%s" % (first, self.number)
 		return first

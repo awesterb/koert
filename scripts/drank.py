@@ -13,6 +13,10 @@ def parse_args():
 			help="be verbose",
 			dest="verbose", action="store_true")
 	subparsers = parser.add_subparsers()
+	
+	events_p = subparsers.add_parser("events",
+			description="Prints a list of events")
+	events_p.set_defaults(handler=Program.events)
 	income_p = subparsers.add_parser("income",
 			description="Print an income for the whole year")
 	income_p.set_defaults(handler=Program.income)
@@ -39,6 +43,21 @@ class Program:
 		d = datetime.now() - n
 		self.log(1,"    done (%s s)", d.seconds + d.microseconds*10**-6)
 
+	def events(self):
+		dates = list(self.bd.eventdir.events.keys())
+		dates.sort()
+		for d in dates:
+			event = self.bd.eventdir.events[d]
+			print event.date
+			if event.invcount:
+				print "\tinvcount: %s" % (event.invcount,)
+			barforms = map(str,list(event.all_barforms))
+			if barforms:
+				print "\tbarforms: %s" % (', '.join(barforms),)
+			delivs = map(str,list(event.delivs))
+			if delivs:
+				print "\tdelivs: %s" % (', '.join(delivs),)
+			print ""
 
 	def income_periods(self):
 		factors = self.bd.factordir.factors.values()
