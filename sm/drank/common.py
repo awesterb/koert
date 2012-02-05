@@ -46,6 +46,57 @@ def parse_date(date_str):
 		date = datetime.date(year, month, day)
 	return date
 
+# A moment has the following grammar:  <date>[/<number:int>]
+def parse_moment(moment_str):
+	parts = moment_str.split("/")
+	date = parse_date(parts[0])
+	if len(parts) not in (1,2):
+		raise ValueError("Invalid moment: %s" % (moment_str,))
+	number = parse_int(parts[1]) if len(parts)==2 else None
+	return Moment(date, number)
+
+class Moment:
+	def __init__(self, date, number=None):
+		self.date = date
+		self.number = number
+	
+	def __str__(self):
+		first = self.date.strftime("%Y-%m-%d") if self.date else "?"
+		if self.number:
+			return "%s/%s" % (first, self.number)
+		return first
+
+	# Moments are ordered lexicographicallish with the important
+	# exception that e.g.
+	# 	2011-10-12/3 <= 2011-10-12
+	def __cmp__(self, other):
+		dd = cmp(self.date, other.date)
+		if dd != 0:
+			return dd
+		# self and other occur on the same date
+		if not other.number:
+			if not self.number:
+				return 0
+			# self has a number, but other does not, 
+			#   so self is smaller than other
+			return -1
+		if not self.number:
+			# self has no number, but other does,
+			#   so self is larger than other
+			return 1
+		return cmp(self.number, other.number)
+
+	def __eq__(self, other):
+		if not isinstance(self, Moment):
+			return NotImplemented
+		if not isinstance(other, Moment):
+			return False
+		return (self.date, self.number) == (other.date, other.number)
+
+	def __hash__(self):
+		return hash((self.date, self.number))
+
+
 # process file name: 
 #   split it into "."-seperated components,
 #   returns these and whether to ignore the file.

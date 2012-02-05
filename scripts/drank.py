@@ -1,5 +1,6 @@
 from koert.drank.boozedir import BoozeDir
 from koert.drank.reporting import EventReport
+from koert.format.table import Table, Header
 from datetime import date, datetime
 import sys
 import os
@@ -13,8 +14,11 @@ def parse_args():
 			dest="verbose", action="store_true")
 	subparsers = parser.add_subparsers()
 	income_p = subparsers.add_parser("income",
-			description="Print an income statement")
+			description="Print an income for the whole year")
 	income_p.set_defaults(handler=Program.income)
+	incomeps_p = subparsers.add_parser("income-periods",
+			description="Print an income statement per period")
+	incomeps_p.set_defaults(handler=Program.income_periods)
 	return parser.parse_args()
 
 
@@ -34,6 +38,45 @@ class Program:
 		self.bd = BoozeDir(self.args.booze_dir)
 		d = datetime.now() - n
 		self.log(1,"    done (%s s)", d.seconds + d.microseconds*10**-6)
+
+
+	def income_periods(self):
+		factors = self.bd.factordir.factors.values()
+		# Sort factors by mililiters; which is a bit silly
+		barf = self.bd.barformdir.total_factors
+		deliv = self.bd.delivdir.total_factors
+		rank = lambda f: -max(barf.get(f,0), deliv.get(f,0))
+		factors.sort(key=rank)
+	
+		periods = self.bd.eventdir.periods
+		t = Table([Header("#", lambda p: str(p.number)),
+			   Header("start date", lambda p: str(p.start_date)),
+			   Header("end date", lambda p: str(p.end_date)),
+			   Header("#bf", lambda p: str(len(tuple(p.barforms)))),
+			   Header("#dl", lambda p: str(len(tuple(p.delivs))))], 
+			   periods)
+		print "The periods are:"
+		print ""
+		print t.format()
+		print ""
+		print ""
+		for p in periods:
+			ft = p.ftallied
+			fd = p.fdelivered
+			fg = p.fdiff
+			t = Table([Header("factor", lambda d: d[0].handle),
+				   Header("tallied", lambda d: str(d[1])),
+				   Header("deliv", lambda d: str(d[2])),
+				   Header("result", lambda d: str(d[2]-d[1])),
+				   Header("diff", lambda d: str(d[3]))],
+					[(f, ft.get(f,0), 
+				             fd.get(f,0), 
+					     fg.get(f,0)) 
+						for f in factors])
+			print ""
+			print ""
+			print p
+			print t.format()
 
 
 	def income(self):

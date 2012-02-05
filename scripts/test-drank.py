@@ -76,11 +76,9 @@ def check_events(args, bd):
 			tags.add("deliv")
 		if len(event.shifts)>0:
 			tags.add("barform")
-		if len(event.invcounts)>0:
+		if event.invcount:
 			tags.add("invcount")
-		print "event on %s (%s):" % (
-				event.date.strftime("%a %Y-%m-%d") \
-						if event.date else "?", 
+		print "event on %s (%s):" % (event.date, 
 				', '.join(tags))
 		for line in EventReport(event, bd).generate():
 			print "\t* "+line

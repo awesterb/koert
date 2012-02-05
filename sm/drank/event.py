@@ -1,5 +1,6 @@
 from common import MildErr, LoadErr, ObjDirErr,\
-		parse_int, parse_date, parse_decimal, processFn
+		parse_int, parse_moment, parse_decimal, processFn,\
+		Moment
 from count import Count
 from rikf import open_rikf_ar
 from amount import parse_amount
@@ -127,9 +128,9 @@ class EventDir:
 	
 	def __getitem__(self, date):
 		if isinstance(date,str):
-			date = parse_date(date)
-		if not isinstance(date,datetime.date) and date!=None:
-			raise ValueError("date not a datetime, str or None:"
+			date = parse_moment(date)
+		if not isinstance(date,Moment):
+			raise ValueError("date not a Moment or str"
 					" %s" %	repr(date))
 		if date not in self.events:
 			self.events[date] = Event(date)
@@ -225,10 +226,13 @@ class Period:
 				Count.zero(parse_amount))
 	
 	@property
+	def fdiff(self):
+		return self.end_ic.fcount + - self.start_ic.fcount
+	
+	@property
 	def fdelivered(self):
 		return sum(map(lambda dl: dl.total_factors, self.delivs),
 				Count.zero(parse_amount))
-
 
 class BarForm:
 	def __init__(self, event, counter, shift, sell_count, 
@@ -267,7 +271,7 @@ class BarForm:
 		header = ar[1]
 		pricelist_str = header[0]
 		pricelist = boozedir.pricelistdir[pricelist_str]
-		date = parse_date(header[1])
+		date = parse_moment(header[1])
 		counter = header[2]
 		shift = Shift.from_str(header[3])
 		startbal = parse_decimal(header[4])
@@ -390,11 +394,16 @@ class InvCount:
 		if len(ar)==1 or len(ar[1])==0:
 			raise MildErr("header is too small")
 		header = ar[1]
-		date = parse_date(header[0])
+		date = parse_moment(header[0])
 		event = boozedir.eventdir[date]
 		count = Count.from_array(ar[2:], boozedir.productdir, 
 				parse_amount)
 		return cls(code, event, count)
+	
+	@property
+	def fcount(self):
+		return self.count.map(
+			lambda p,n: p.factors.scale(n).items)
 
 
 class InvCountDir:
@@ -490,7 +499,7 @@ class Deliv:
 			pricelist = boozedir.pricelistdir[header[0]]
 		except ObjDirErr:
 			raise MildErr("could not find pricelist")
-		date = parse_date(header[1])
+		date = parse_moment(header[1])
 		event = boozedir.eventdir[date]
 		description = header[2].lower() if len(header)>=3 \
 				else None
