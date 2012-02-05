@@ -64,15 +64,17 @@ class Program:
 			ft = p.ftallied
 			fd = p.fdelivered
 			fg = p.fdiff
+			get_data_tuple = lambda f: (f, 
+					ft.get(f,0), fd.get(f,0), fg.get(f,0)) 
+			dt_not_trivial = lambda t: not (t[1]==t[2]==t[3]==0)
+			rows = filter(dt_not_trivial,
+					[get_data_tuple(f) for f in factors])
 			t = Table([Header("factor", lambda d: d[0].handle),
 				   Header("tallied", lambda d: str(d[1])),
 				   Header("deliv", lambda d: str(d[2])),
 				   Header("result", lambda d: str(d[2]-d[1])),
-				   Header("diff", lambda d: str(d[3]))],
-					[(f, ft.get(f,0), 
-				             fd.get(f,0), 
-					     fg.get(f,0)) 
-						for f in factors])
+				   Header("diff", lambda d: "%.0f" % d[3])],
+				   rows)
 			print ""
 			print ""
 			print p
