@@ -1,0 +1,61 @@
+#!/usr/bin/python
+from koert.gnucash.tools import open_gcf
+from koert.gnucash.balance import get_opening_balance, get_balance_at
+from time import mktime, strptime
+from koert.verification.fin7scheme import scheme
+import argparse
+import sys
+
+def parse_args():
+	parser = argparse.ArgumentParser(description="Read Gnucash files")
+	parser.add_argument("gnucash_file")
+	sp = parser.add_subparsers()
+	
+	balp = sp.add_parser("bal", description="Show the balance")
+	balp.set_defaults(command=bal)
+	balp.add_argument("--date", type=parse_time, default=None)
+	balp.add_argument("--account", type=str, default=":")
+	balp.add_argument("--equity_account", type=str, 
+			default=":Openingsbalansen")
+
+	lsacp = sp.add_parser("lsac", description="List accounts")
+	lsacp.set_defaults(command=lsac)
+	lsacp.add_argument("account", type=str)
+
+	return parser.parse_args()
+
+def parse_time(s):
+	return mktime(strptime(s, '%Y-%m-%d'))
+
+
+def main():
+	args = parse_args()
+	gcf = open_gcf(args.gnucash_file, scheme)
+	book = gcf.fields['books'].values()[0]
+	args.command(book, args)
+
+def get_relevant_children(ac):
+	todo = [ac]
+	while(len(todo)>0):
+		ac = todo.pop()
+		if len(ac.children)<=10:
+			todo.extend(ac.children.values())
+		yield ac
+
+def bal(book, args):
+	opb = None
+	if args.date==None:
+		opb =  get_opening_balance(book, 
+				book.ac_by_path(args.equity_account))
+	else:
+		opb = get_balance_at(book, args.date)
+	acs = get_relevant_children(book.ac_by_path(args.account))
+	for ac in acs:
+		print "%65s %10s" % (ac.path, str(opb[ac]))
+
+def lsac(book, args):
+	for ac in book.ac_by_path(args.account).children.values():
+		print ac.name
+
+if __name__=="__main__":
+	main() 
