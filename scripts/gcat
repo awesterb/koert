@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from koert.gnucash.tools import open_gcf
-from koert.gnucash.balance import get_opening_balance, get_balance_at
+from koert.gnucash.balance import get_opening_balance, get_balance_at, get_flow
 from time import mktime, strptime
 from koert.verification.fin7scheme import scheme
 import argparse
@@ -21,6 +21,14 @@ def parse_args():
 	lsacp = sp.add_parser("lsac", description="List accounts")
 	lsacp.set_defaults(command=lsac)
 	lsacp.add_argument("account", type=str)
+
+	flowp = sp.add_parser("flow", 
+			description="Show flow in a given period")
+	flowp.set_defaults(command=flow)
+	flowp.add_argument("--begin", type=parse_time, default=None)
+	flowp.add_argument("--end", type=parse_time, default=None)
+	flowp.add_argument("--from", type=str, default=":")
+	flowp.add_argument("--account", type=str, default=":")
 
 	return parser.parse_args()
 
@@ -56,6 +64,21 @@ def bal(book, args):
 def lsac(book, args):
 	for ac in book.ac_by_path(args.account).children.values():
 		print ac.name
+
+def flow(book, args):
+	fromac = book.ac_by_path(getattr(args,"from"))
+	showac = book.ac_by_path(args.account)
+	f = get_flow(book, _from = fromac, begin=args.begin, end=args.end)
+	for ac in get_relevant_children(showac):
+		fac = f[ac]
+		if not fac[0] and not fac[1]:
+			continue
+		total = fac[0] + fac[1]
+		comps = [n for n in fac if n]
+		print "%65s %10s" % (ac.path, str(total))
+		if len(comps)==2:
+			print "%65s %10s" % ("", str(fac[0]))
+			print "%65s %10s" % ("", str(fac[1]))
 
 if __name__=="__main__":
 	main() 

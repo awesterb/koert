@@ -1,53 +1,69 @@
 from decimal import Decimal
 
-def get_balance_at(book, date):
+# Returns the transactions 
+#       from    only this account (or its subaccounts) if specified
+# in the period
+#       begin   -ing at this date if provided and 
+#       end     -ing at this date if provided.
+#
+# That is, if *begin* is not provided, the period has no begin, etc.
+# So if *begin*, *end* and *from* are not specified,
+# all transactions are returned.
+def get_trs(book, _from=None, begin=None, end=None):
 	trs = set()
-	for tr in book.transactions.itervalues():
-		if tr.date_posted.date<=date:
-			trs.add(tr)
-	return get_balance_from_trs(book, trs)
+	if not _from:
+		_from = book.root
+	for tr in _from.get_deep_trs():
+		if not tr_in_period(tr, begin, end):
+			continue
+		trs.add(tr)
+	return trs
 
+# Given a set of transactions from *get_trs* specified by kwargs,
+# returns the _flow_ to each account,
+# which is the sum of the amounts of the mutations of this account.
+def get_flow(book, **kwargs):
+	return get_flow_from_trs(book, get_trs(book, **kwargs))
+
+# Returns the balance of each account at a given date,
+# which is the flow to that account upto the given date.
+def get_balance_at(book, date):
+	return get_flow(book, end=date)
+
+# Returns the opening balance,
+# which is the flow from the Equity account *obaccount*.
 def get_opening_balance(book, obaccount):
-	ob_muts = obaccount.mutations
-	trs = [mut.transaction for mut in ob_muts]
-	return get_balance_from_trs(book, trs)
+	return get_flow(book, _from=obaccount)
 
-def get_balance_from_trs(book, trs):
+
+################ INTERNALS ####################################################
+
+def tr_in_period(tr, begin, end):
+	if end and tr.date_posted.date > end:
+		return False
+	if begin and tr.date_posted.date < begin:
+		return False
+	return True
+
+
+def get_flow_from_trs(book, trs):
 	muts = set()
 	for tr in trs:
 		muts.update(tr.splits.values())
-	return get_balance_from_muts(book, muts)
+	return get_flow_from_muts(book, muts)
 
-def get_balance_from_muts(book, muts):
-	balance = {}
+def get_flow_from_muts(book, muts):
+	flow = {}
 	for ac in book.accounts.values():
-		balance[ac] = Decimal(0)
+		flow[ac] = [Decimal(0), Decimal(0)]
 	for mut in muts:
 		ac = mut.account
+		val = mut.value
+		pos = (val >= 0)
 		while ac!=None:
-			balance[ac] += mut.value
+			if pos:
+				flow[ac][0] += val
+			else:
+				flow[ac][1] += val
 			ac = ac.parent
-	return balance
-
-def get_balance_history(book, trs):
-	date_trs = {}
-	for tr in trs:
-		d = tr.date_posted.date
-		if d not in date_trs:
-			date_trs[d] = []
-		date_trs[d].append(tr)
-	dates = list(date_trs.keys())
-	dates.sort()
-	balance = {}
-	for ac in book.accounts.values():
-		balance[ac] = Decimal(0)
-	for date in dates:
-		balance = dict(balance)
-		for tr in date_trs[date]:
-			for mut in tr.splits.values():
-				ac = mut.account
-				while ac!=None:
-					balance[ac] += mut.value
-					ac = ac.parent
-		yield (date, balance)
-			
+	return flow

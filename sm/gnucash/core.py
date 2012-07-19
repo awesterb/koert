@@ -377,10 +377,16 @@ class Account(GcObj):
 			todo.extend(desc.children.itervalues())
 			yield desc
 
-	def get_descendants_mutations(self):
+	def get_deep_mutations(self):
 		for desc in self.get_descendants():
 			for mut in desc.mutations:
 				yield mut
+	
+	def get_deep_trs(self):
+		trs = set()
+		for mut in self.get_deep_mutations():
+			trs.add(mut.transaction)
+		return trs
 
 	@property
 	def nice_id(self):
