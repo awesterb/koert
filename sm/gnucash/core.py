@@ -308,6 +308,8 @@ class Account(GcObj):
 	def __init__(self, fields):
 		GcObj.__init__(self, fields)
 		self._path = None
+		self._shortpath = None
+		self._shortname = None
 		# the following are set by the Book
 		self._parent = None 
 		self._children = {}
@@ -339,8 +341,39 @@ class Account(GcObj):
 		return ":".join((self.parent.path, self.name))
 
 	@property
+	def shortpath(self):
+		if self._shortpath==None:
+			self._shortpath = self._create_shortpath()
+		return self._shortpath
+	def _create_shortpath(self):
+		if self.parent==None:
+			return ""
+		return ":".join((self.parent.shortpath, self.shortname))
+
+	@property
 	def name(self):
 		return self.fields['name']
+
+	@property
+	def shortname(self):
+		if self._shortname==None:
+			if self.parent==None:
+				self._shortname=""
+			self.parent._create_childrens_shortnames()
+		return self._shortname
+	def _create_childrens_shortnames(self):
+		todo = { "": self.children.values() }
+		while len(todo)>0:
+			shortname, acs = next(todo.iteritems())
+			del todo[shortname]
+			if len(acs)==1:
+				acs[0]._shortname = shortname
+				continue
+			for ac in acs:
+				acsn = shortname + ac.name[len(shortname)]
+				if acsn not in todo:
+					todo[acsn] = []
+				todo[acsn].append(ac)
 
 	@property
 	def type(self):
