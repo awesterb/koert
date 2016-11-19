@@ -1,5 +1,6 @@
-from koert.verification.core import Verifier, TrsHaveNum, TrNumsAreRemco, \
-		TrNumsAreRemcoContinuous, AcMutThenNoSplit, TrMutAc, \
+from koert.verification.core import Verifier, TrsHaveNum, \
+		TrNumsAreWellFormed, \
+		TrNumsAreContinuous, AcMutThenNoSplit, TrMutAc, \
 		SpNonZero, TrHaveFin7Softref
 from koert.gnucash.tools import open_gcf
 from koert.verification.fin7scheme import scheme
@@ -13,7 +14,8 @@ def main(argv):
 	gcf = open_gcf(path, scheme)
 	book = gcf.fields['books'].values()[0]
 	v = Verifier(gcf)
-	res = v.verify(TrsHaveNum, TrNumsAreRemco, TrNumsAreRemcoContinuous,
+	res = v.verify(TrsHaveNum, TrNumsAreWellFormed, 
+			TrNumsAreContinuous,
 			AcMutThenNoSplit, TrMutAc, SpNonZero, 
 			TrHaveFin7Softref)
 	for fact in res:

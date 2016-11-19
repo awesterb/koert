@@ -473,8 +473,8 @@ class Split(GcObj):
 		self._account = None
 		self._transaction = None
 
-	def __repr__(self):
-		return "<sp %s %s by tr%s>" % (self.value, 
+	def __unicode__(self):
+		return u"<sp %s %s by tr%s>" % (self.value, 
 				self.account.nice_id, 
 				self.transaction.num)
 

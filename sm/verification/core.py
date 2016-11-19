@@ -102,35 +102,40 @@ class TrsHaveNum(Verlet):
 		return len(self.issues)==0
 
 
-@fact(descr="each transaction number is a 3-digit decimal", 
+@fact(descr="all transaction numbers are decimals of the same length", 
 		deps=((OneBook,True),))
-class TrNumsAreRemco(Verlet):
+class TrNumsAreWellFormed(Verlet):
 	def get_ok(self):
+		length = None
 		fails = []
 		maxnum = 0
 		for num in self.v.book.trs_by_num.iterkeys():
 			if num==None or num=="":
 				continue
-			if (len(num)==3 and 
-					all([d in "0123456789" for d in num])):
+			if all([d in "0123456789" for d in num]):
 				inum = int(num)
 				if inum > maxnum:
 					maxnum = inum
-				continue
+				if length==None:
+					length = len(num)
+				if length==len(num):
+					continue
 			fails.append(num)
 		self.v.max_tr_num = maxnum
+		self.v.tr_num_length = length
 		if len(fails)>0:
 			self.issues.append("the numbers %s are not" % 
 					(tuple(fails),))
 		return len(self.issues)==0
 
 @fact(descr="the transactions numbers are continuous",
-		deps=((TrNumsAreRemco,False), ))
-class TrNumsAreRemcoContinuous(Verlet):
+		deps=((TrNumsAreWellFormed,False), ))
+class TrNumsAreContinuous(Verlet):
 	def get_ok(self):
+		tr_num_format = "%0" + str(self.v.tr_num_length) + "d"
 		fails = []
 		for inum in xrange(1,self.v.max_tr_num+1):
-			num = "%03d" % inum
+			num = tr_num_format % inum
 			if num not in self.v.book.trs_by_num:
 				fails.append(num)
 		if len(fails)>0:
