@@ -30,7 +30,7 @@ class File(GcStruct):
 
 
 class Book(GcObj):
-	def __init__(self, fields, scheme):
+	def __init__(self, fields, scheme=None):
 		GcObj.__init__(self, fields)
 		self._root = None
 		self._scheme = scheme
@@ -42,7 +42,8 @@ class Book(GcObj):
 		self._maximum_softrefs_by_kind = None
 		self._minimum_softrefs_by_kind = None
 		self._missing_softrefs_by_kind = None
-		self._apply_scheme()
+                if scheme!=None:
+                    self._apply_scheme()
 
 	def _set_account_refs(self):
 		for ac in self.accounts.itervalues():

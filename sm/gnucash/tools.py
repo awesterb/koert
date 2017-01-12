@@ -72,7 +72,7 @@ overflow, you might want to increase the maximum recursion depth by \
 sys.setrecursionlimit.""")
 			raise e
 
-def open_gcf(filepath, scheme, parse=saxparse, mind_cache=True):
+def open_gcf(filepath, scheme=None, parse=saxparse, mind_cache=True):
 	if mind_cache:
 		result = search_for_cache(filepath)
 		if result!=False:
