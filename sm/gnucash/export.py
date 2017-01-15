@@ -12,7 +12,7 @@ def get_user_balance(book, creditors_account, debitors_account):
         dac = book.ac_by_path(debitors_account)
         accounts["creditor"]=creditors_account
         for mut in dac.mutations:
-            muts.append(mut_data(mut,-1))
+            muts.append(mut_data(mut))
             value -= mut.value
     except KeyError:
         pass
@@ -21,7 +21,7 @@ def get_user_balance(book, creditors_account, debitors_account):
         cac = book.ac_by_path(creditors_account)
         accounts["debitor"]=debitors_account
         for mut in cac.mutations:
-            muts.append(mut_data(mut,1))
+            muts.append(mut_data(mut))
             value += mut.value
     except KeyError:
         pass
@@ -35,7 +35,7 @@ def get_user_balance(book, creditors_account, debitors_account):
     }
     
 
-def mut_data(mut, sign):
+def mut_data(mut):
     tr = mut.transaction
     return {
             "tr": tr.num,
@@ -45,5 +45,5 @@ def mut_data(mut, sign):
                 'timestamp': tr.date_posted.date
             },
             "description": mut.memo,
-            "value": str(sign*mut.value)
+            "value": str(mut.value)
             }
