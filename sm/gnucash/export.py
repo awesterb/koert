@@ -13,7 +13,7 @@ def get_user_balance(book, creditors_account, debitors_account):
         accounts["creditor"]=creditors_account
         for mut in dac.mutations:
             muts.append(mut_data(mut))
-            value -= mut.value
+            value += mut.value
     except KeyError:
         pass
 
