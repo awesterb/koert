@@ -29,7 +29,7 @@ def get_user_balance(book, creditors_account, debitors_account):
     muts.sort(key=lambda a: a['date']['timestamp'])
 
     return {
-            "total": value,
+            "total": str(value),
             "mutations": muts,
             "accounts": accounts
     }
@@ -45,5 +45,5 @@ def mut_data(mut, sign):
                 'timestamp': tr.date_posted.date
             },
             "description": mut.memo,
-            "value": sign*mut.value
+            "value": str(sign*mut.value)
             }
