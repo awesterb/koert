@@ -6,6 +6,20 @@ import sys
 from warnings import warn
 from subprocess import Popen, PIPE
 
+def open_gcf_in_git_repo(repopath, filepath, cachepath=None, scheme=None):
+    from git import Repo
+    
+    repo = Repo(repopath)
+    commit = repo.head.commit
+    mtime = commit.authored_date
+    f = commit.tree[filepath].data_stream
+
+    result =  parse_gcf(f, mtime, cachepath=cachepath, scheme=scheme)
+
+    f.read()
+
+    return result
+
 def open_pos_gzipped(filepath):
 	f = None
 	try:
@@ -39,30 +53,29 @@ def get_commit_name():
 	outp, err = p.communicate()
 	return outp
 
-def search_for_cache(filepath):
-	cp = cache_path(filepath)
-	if not os.path.exists(cp):
+def load_cache(cachepath, mtime):
+	if not os.path.exists(cachepath):
 		return False
 	# Do not use the cache if the gnucash file is newer
-	if os.path.getmtime(filepath) >= os.path.getmtime(cp):
+	if mtime >= os.path.getmtime(cachepath):
 		return False
-	with open(cp,"r") as f:
+	with open(cachepath,"r") as f:
 		current_commit_name = get_commit_name()
 		try:
 			cached_commit_name, gcf = cPickle.load(f)
 			if cached_commit_name!=current_commit_name:
 				return False
+                        print "loaded cache %s" % cachepath
 			return gcf
 		except Exception as e:
 			warn("Failed to load pickled cache of Gnucash file " \
-					"'%s': %s" % (filepath, repr(e)))
+					"'%s': %s" % (cachepath, repr(e)))
 			return False
 
-def update_cache(filepath, gcf):
-	cp = cache_path(filepath)
+def update_cache(cachepath, gcf):
 	if sys.getrecursionlimit()<2000:
 		sys.setrecursionlimit(2000)
-	with open(cp,"w") as f:
+	with open(cachepath,"w") as f:
 		try:
 			cPickle.dump((get_commit_name(),gcf),f)
 		except RuntimeError as e:
@@ -72,15 +85,20 @@ overflow, you might want to increase the maximum recursion depth by \
 sys.setrecursionlimit.""")
 			raise e
 
-def open_gcf(filepath, scheme=None, parse=saxparse, mind_cache=True):
-	if mind_cache:
-		result = search_for_cache(filepath)
+def parse_gcf(f, mtime, scheme=None, parse=saxparse, cachepath=None):
+	if cachepath!=None:
+		result = load_cache(cachepath,mtime)
 		if result!=False:
 			return result
 	handler = SaxHandler(scheme)
-	f = open_pos_gzipped(filepath)
 	parse(f, handler)
 	result = handler.result
-	if mind_cache:
-		update_cache(filepath, result)
+        update_cache(cachepath, result)
 	return result
+
+def open_gcf(filepath, scheme=None, parse=saxparse, cachepath=None):
+        if cachepath==None:
+            cachepath = cache_path(filepath)
+        with open(filepath) as f:
+            return parse_gcf(f,os.path.getmtime(filepath),
+                    scheme=scheme, parse=parse, cachepath=cachepath)
