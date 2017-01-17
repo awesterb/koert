@@ -47,3 +47,32 @@ def mut_data(mut):
             "description": mut.memo,
             "value": str(mut.value)
             }
+
+
+def get_debitors(book, creditors_account, debitors_account):
+    result = []
+    names = set()
+
+    cac = book.ac_by_path(creditors_account)
+    names.update(cac.children.iterkeys())
+
+    dac = book.ac_by_path(debitors_account)
+    names.update(dac.children.iterkeys())
+
+    for name in names:
+        value = 0
+        if name in cac.children:
+            for mut in cac.children[name].mutations:
+                value += mut.value
+        if name in dac.children:
+            for mut in dac.children[name].mutations:
+                value += mut.value
+        if value>0:
+            result.append((name,value))
+    
+    result.sort(key=lambda x: -x[1])
+
+    result = [(name,str(value)) for (name,value) in result]
+
+    return result
+

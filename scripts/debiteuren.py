@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from koert.gnucash.tools import open_gcf
 from koert.gnucash.balance import get_opening_balance, get_balance_at, get_flow
-from koert.gnucash.export import get_user_balance
+from koert.gnucash.export import get_user_balance, get_debitors
 from time import mktime, strptime
 import argparse
 import sys
@@ -23,13 +23,13 @@ def main():
     gcf = open_gcf(args.gnucash_file)
     book = gcf.fields['books'].values()[0]
 
-    print get_user_balance(book, 
-            args.creditors_account+":"+args.name, 
-            args.debitors_account+":"+args.name)['mutations']
-    
-
-
-
+    if args.name!=None:
+        print get_user_balance(book, 
+                args.creditors_account+":"+args.name, 
+                args.debitors_account+":"+args.name)['mutations']
+    else:
+        print  get_debitors(book,
+                args.creditors_account, args.debitors_account)
     
 
 if __name__=="__main__":
