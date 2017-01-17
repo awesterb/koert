@@ -93,6 +93,7 @@ def parse_gcf(f, mtime, scheme=None, parse=saxparse, cachepath=None):
 	handler = SaxHandler(scheme)
 	parse(f, handler)
 	result = handler.result
+        result.mtime = mtime
         update_cache(cachepath, result)
 	return result
 
