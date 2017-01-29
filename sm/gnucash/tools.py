@@ -3,6 +3,7 @@ import gzip
 import os.path
 import cPickle
 import sys
+import yaml
 from warnings import warn
 from subprocess import Popen, PIPE
 
@@ -103,3 +104,23 @@ def open_gcf(filepath, scheme=None, parse=saxparse, cachepath=None):
         with open(filepath) as f:
             return parse_gcf(f,os.path.getmtime(filepath),
                     scheme=scheme, parse=parse, cachepath=cachepath)
+
+def open_yaml(path):
+    with open(path) as f:
+        d = yaml.load(f)
+
+    dirname = os.path.dirname(path)
+    gcf_path = os.path.join(dirname, d['path'])
+    cache_path = None
+    if "cache" in d:
+        cache_path = os.path.join(dirname, d['cache'])
+    gcf = None
+    if 'repo' in d:
+        repo_path = os.path.join(dirname, d['repo'])
+        gcf = open_gcf_in_git_repo(repo_path, gcf_path, cachepath = cache_path)
+    else:
+        gcf = open_gcf(gcf_path, cachepath=cache_path)
+    if 'meta' in d:
+        gcf.meta = d['meta']
+
+    return gcf

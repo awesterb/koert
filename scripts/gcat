@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-from koert.gnucash.tools import open_gcf, open_gcf_in_git_repo
+from koert.gnucash.tools import open_gcf, open_gcf_in_git_repo, open_yaml
 from koert.gnucash.balance import get_opening_balance, get_balance_at, get_flow
 from time import mktime, strptime
 from koert.verification.fin7scheme import scheme
 import argparse
 import sys
+import os.path
 
 def parse_args():
 	parser = argparse.ArgumentParser(description="Read Gnucash files")
@@ -44,7 +45,10 @@ def main():
         cachepath = None
         if args.cache_path!=None:
             cachepath = args.cache_path
-        if args.git_repo!=None:
+        root, ext = os.path.splitext(args.gnucash_file)
+        if ext==".yaml":
+            gcf = open_yaml(args.gnucash_file)
+        elif args.git_repo!=None:
             gcf = open_gcf_in_git_repo(args.git_repo, args.gnucash_file, 
                     cachepath = cachepath,
                     scheme=scheme)
