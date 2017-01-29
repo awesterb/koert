@@ -117,7 +117,7 @@ def open_yaml(path):
     gcf = None
     if 'repo' in d:
         repo_path = os.path.join(dirname, d['repo'])
-        gcf = open_gcf_in_git_repo(repo_path, gcf_path, cachepath = cache_path)
+        gcf = open_gcf_in_git_repo(repo_path, d['path'], cachepath = cache_path)
     else:
         gcf = open_gcf(gcf_path, cachepath=cache_path)
     if 'meta' in d:
