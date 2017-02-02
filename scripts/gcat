@@ -1,101 +1,106 @@
 #!/usr/bin/env python
+from __future__ import print_function
+from builtins import str
 from koert.gnucash.tools import open_gcf, open_gcf_in_git_repo, open_yaml
 from koert.gnucash.balance import get_opening_balance, get_balance_at, get_flow
 from time import mktime, strptime
-from koert.verification.fin7scheme import scheme
 import argparse
-import sys
 import os.path
 
+
 def parse_args():
-	parser = argparse.ArgumentParser(description="Read Gnucash files")
-	parser.add_argument("gnucash_file")
-        parser.add_argument("--git_repo", type=str)
-        parser.add_argument("--cache_path", type=str)
-	sp = parser.add_subparsers()
-	
-	balp = sp.add_parser("bal", description="Show the balance")
-	balp.set_defaults(command=bal)
-	balp.add_argument("--date", type=parse_time, default=None)
-	balp.add_argument("--account", type=str, default=":")
-	balp.add_argument("--equity_account", type=str, 
-			default=":Openingsbalansen")
+    parser = argparse.ArgumentParser(description="Read Gnucash files")
+    parser.add_argument("gnucash_file")
+    parser.add_argument("--git_repo", type=str)
+    parser.add_argument("--cache_path", type=str)
+    sp = parser.add_subparsers()
 
-	lsacp = sp.add_parser("lsac", description="List accounts")
-	lsacp.set_defaults(command=lsac)
-	lsacp.add_argument("account", type=str)
+    balp = sp.add_parser("bal", description="Show the balance")
+    balp.set_defaults(command=bal)
+    balp.add_argument("--date", type=parse_time, default=None)
+    balp.add_argument("--account", type=str, default=":")
+    balp.add_argument("--equity_account", type=str,
+                      default=":Openingsbalansen")
 
-	flowp = sp.add_parser("flow", 
-			description="Show flow in a given period")
-	flowp.set_defaults(command=flow)
-	flowp.add_argument("--begin", type=parse_time, default=None)
-	flowp.add_argument("--end", type=parse_time, default=None)
-	flowp.add_argument("--from", type=str, default=":")
-	flowp.add_argument("--account", type=str, default=":")
+    lsacp = sp.add_parser("lsac", description="List accounts")
+    lsacp.set_defaults(command=lsac)
+    lsacp.add_argument("account", type=str)
 
-	return parser.parse_args()
+    flowp = sp.add_parser("flow",
+                          description="Show flow in a given period")
+    flowp.set_defaults(command=flow)
+    flowp.add_argument("--begin", type=parse_time, default=None)
+    flowp.add_argument("--end", type=parse_time, default=None)
+    flowp.add_argument("--from", type=str, default=":")
+    flowp.add_argument("--account", type=str, default=":")
+
+    return parser.parse_args()
+
 
 def parse_time(s):
-	return mktime(strptime(s, '%Y-%m-%d'))
+    return mktime(strptime(s, '%Y-%m-%d'))
 
 
 def main():
-	args = parse_args()
-        gcf = None
-        cachepath = None
-        if args.cache_path!=None:
-            cachepath = args.cache_path
-        root, ext = os.path.splitext(args.gnucash_file)
-        if ext==".yaml":
-            gcf = open_yaml(args.gnucash_file)
-        elif args.git_repo!=None:
-            gcf = open_gcf_in_git_repo(args.git_repo, args.gnucash_file, 
-                    cachepath = cachepath,
-                    scheme=scheme)
-        else:
-            gcf = open_gcf(args.gnucash_file, 
-                    scheme=scheme,
-                    cachepath = cachepath)
-	book = gcf.fields['books'].values()[0]
-	args.command(book, args)
+    args = parse_args()
+    gcf = None
+    cachepath = None
+    if args.cache_path is not None:
+        cachepath = args.cache_path
+    root, ext = os.path.splitext(args.gnucash_file)
+    if ext == ".yaml":
+        gcf = open_yaml(args.gnucash_file)
+    elif args.git_repo is not None:
+        gcf = open_gcf_in_git_repo(args.git_repo, args.gnucash_file,
+                                   cachepath=cachepath)
+    else:
+        gcf = open_gcf(args.gnucash_file,
+                       cachepath=cachepath)
+    book = list(gcf.fields['books'].values())[0]
+    args.command(book, args)
+
 
 def get_relevant_children(ac):
-	todo = [ac]
-	while(len(todo)>0):
-		ac = todo.pop()
-		if len(ac.children)<=10:
-			todo.extend(ac.children.values())
-		yield ac
+    todo = [ac]
+    while(len(todo) > 0):
+        ac = todo.pop()
+        if len(ac.children) <= 10:
+            todo.extend(list(ac.children.values()))
+        yield ac
+
 
 def bal(book, args):
-	opb = None
-	if args.date==None:
-		opb =  get_opening_balance(book, 
-				book.ac_by_path(args.equity_account))
-	else:
-		opb = get_balance_at(book, args.date)
-	acs = get_relevant_children(book.ac_by_path(args.account))
-	for ac in acs:
-		print "%58s %10s %10s" % (ac.shortpath, opb[ac][0], opb[ac][1])
+    opb = None
+    if args.date is None:
+        opb = get_opening_balance(book,
+                                  book.ac_by_path(args.equity_account))
+    else:
+        opb = get_balance_at(book, args.date)
+    acs = get_relevant_children(book.ac_by_path(args.account))
+    for ac in acs:
+        print("%58s %10s %10s" % (ac.shortpath, opb[ac][0], opb[ac][1]))
+
 
 def lsac(book, args):
-	for ac in book.ac_by_path(args.account).children.values():
-		print ac.name
+    for ac in list(book.ac_by_path(args.account).children.values()):
+        print(ac.name)
+
 
 def flow(book, args):
-	fromac = book.ac_by_path(getattr(args,"from"))
-	showac = book.ac_by_path(args.account)
-	f = get_flow(book, _from = fromac, begin=args.begin, end=args.end)
-	for ac in get_relevant_children(showac):
-		fac = f[ac]
-		if not fac[0] and not fac[1]:
-			continue
-		total = fac[0] + fac[1]
-		comps = [n for n in fac if n]
-		print "%65s %10s" % (ac.path, str(total))
-		if len(comps)==2:
-			print "%65s %10s" % ("", str(fac[0]))
-			print "%65s %10s" % ("", str(fac[1]))
+    fromac = book.ac_by_path(getattr(args, "from"))
+    showac = book.ac_by_path(args.account)
+    f = get_flow(book, _from=fromac, begin=args.begin, end=args.end)
+    for ac in get_relevant_children(showac):
+        fac = f[ac]
+        if not fac[0] and not fac[1]:
+            continue
+        total = fac[0] + fac[1]
+        comps = [n for n in fac if n]
+        print("%65s %10s" % (ac.path, str(total)))
+        if len(comps) == 2:
+            print("%65s %10s" % ("", str(fac[0])))
+            print("%65s %10s" % ("", str(fac[1])))
 
-if __name__=="__main__":
-	main() 
+
+if __name__ == "__main__":
+    main()

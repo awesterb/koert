@@ -1,8 +1,13 @@
 
 # returns the information (in a JSON-friendly manner)
-# needed to present a user with 
-# its current balance based on the specified paths to 
+# needed to present a user with
+# its current balance based on the specified paths to
 # said user's creditor and debitor account.
+
+
+from builtins import str
+
+
 def get_user_balance(book, creditors_account, debitors_account):
     muts = []
     value = 0
@@ -10,7 +15,7 @@ def get_user_balance(book, creditors_account, debitors_account):
 
     try:
         dac = book.ac_by_path(debitors_account)
-        accounts["creditor"]=creditors_account
+        accounts["creditor"] = creditors_account
         for mut in dac.mutations:
             muts.append(mut_data(mut))
             value += mut.value
@@ -19,7 +24,7 @@ def get_user_balance(book, creditors_account, debitors_account):
 
     try:
         cac = book.ac_by_path(creditors_account)
-        accounts["debitor"]=debitors_account
+        accounts["debitor"] = debitors_account
         for mut in cac.mutations:
             muts.append(mut_data(mut))
             value += mut.value
@@ -29,24 +34,24 @@ def get_user_balance(book, creditors_account, debitors_account):
     muts.sort(key=lambda a: a['date']['timestamp'])
 
     return {
-            "total": str(value),
-            "mutations": muts,
-            "accounts": accounts
+        "total": str(value),
+        "mutations": muts,
+        "accounts": accounts
     }
-    
+
 
 def mut_data(mut):
     tr = mut.transaction
     return {
-            "tr": tr.num,
-            "tr-description": tr.description,
-            "date": {
-                'text': repr(tr.date_posted),
-                'timestamp': tr.date_posted.date
-            },
-            "description": mut.memo,
-            "value": str(mut.value)
-            }
+        "tr": tr.num,
+        "tr-description": tr.description,
+        "date": {
+            'text': repr(tr.date_posted),
+            'timestamp': tr.date_posted.date
+        },
+        "description": mut.memo,
+        "value": str(mut.value)
+    }
 
 
 def get_debitors(book, creditors_account, debitors_account):
@@ -54,10 +59,10 @@ def get_debitors(book, creditors_account, debitors_account):
     names = set()
 
     cac = book.ac_by_path(creditors_account)
-    names.update(cac.children.iterkeys())
+    names.update(iter(cac.children.keys()))
 
     dac = book.ac_by_path(debitors_account)
-    names.update(dac.children.iterkeys())
+    names.update(iter(dac.children.keys()))
 
     for name in names:
         value = 0
@@ -67,12 +72,11 @@ def get_debitors(book, creditors_account, debitors_account):
         if name in dac.children:
             for mut in dac.children[name].mutations:
                 value += mut.value
-        if value>0:
-            result.append((name,value))
-    
+        if value > 0:
+            result.append((name, value))
+
     result.sort(key=lambda x: -x[1])
 
-    result = [(name,str(value)) for (name,value) in result]
+    result = [(name, str(val)) for (name, val) in result]
 
     return result
-
