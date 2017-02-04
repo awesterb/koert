@@ -48,7 +48,7 @@ def mut_data(mut):
             'timestamp': tr.date_posted.date
         },
         "description": mut.memo,
-        "value": six.text_type(tr(mut.value))
+        "value": six.text_type(mut.value)
     }
 
 
