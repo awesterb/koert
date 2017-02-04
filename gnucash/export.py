@@ -27,6 +27,9 @@ def get_user_balance(book, accounts):
 
     trs = [tr_data(tr, accounts) for tr in trs]
 
+    # MsgPack can't serialize sets
+    accounts = dict([(account, None) for account in accounts])
+
     return {
         "total": six.text_type(value),
         "trs": trs,
