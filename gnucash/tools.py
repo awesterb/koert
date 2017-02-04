@@ -1,5 +1,3 @@
-from __future__ import print_function
-from future import standard_library
 from koert.gnucash.xmlformat import SaxHandler
 import gzip
 import os.path
@@ -9,7 +7,6 @@ import yaml
 import io
 from warnings import warn
 from subprocess import Popen, PIPE
-standard_library.install_aliases()
 
 
 def open_gcf_in_git_repo(repopath, filepath, cachepath=None):

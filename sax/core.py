@@ -1,4 +1,3 @@
-from __future__ import print_function
 from builtins import map
 from builtins import object
 from xml.sax.handler import ContentHandler as SaxHandler

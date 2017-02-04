@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
-from builtins import str
 from koert.gnucash.tools import open_gcf, open_gcf_in_git_repo, open_yaml
 from koert.gnucash.balance import get_opening_balance, get_balance_at, get_flow
 from time import mktime, strptime
@@ -96,10 +94,10 @@ def flow(book, args):
             continue
         total = fac[0] + fac[1]
         comps = [n for n in fac if n]
-        print("%65s %10s" % (ac.path, str(total)))
+        print("%65s %10s" % (ac.path, total))
         if len(comps) == 2:
-            print("%65s %10s" % ("", str(fac[0])))
-            print("%65s %10s" % ("", str(fac[1])))
+            print("%65s %10s" % ("", fac[0]))
+            print("%65s %10s" % ("", fac[1]))
 
 
 if __name__ == "__main__":

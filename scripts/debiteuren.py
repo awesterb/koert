@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 from koert.gnucash.tools import open_gcf
 from koert.gnucash.export import get_user_balance, get_debitors
 import argparse

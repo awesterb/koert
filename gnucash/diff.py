@@ -1,9 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
-from builtins import map
-from builtins import str
-from builtins import object
 from .core import GcStruct
+import six
 
 # Some general code concerning "difference functions".
 # A *difference function*  diff  assigns to each pair A B of objects
@@ -26,6 +22,7 @@ from .core import GcStruct
 # of these trees called  DeepDictDiff(diff).
 
 
+@six.python_2_unicode_compatible
 class EqDiff(object):
 
     def __init__(self, a, b):
@@ -35,10 +32,11 @@ class EqDiff(object):
     def differ(self):
         return self.difference[0] != self.difference[1]
 
-    def __repr__(self):
+    def __str__(self):
         if not self.differ:
             return "(equal)"
-        return "(inequal: %s vs %s)" % tuple(map(repr, self.difference))
+        return "(inequal: %s vs %s)" % tuple(map(six.text_type, 
+            self.difference))
 
 
 class InDiff(object):
@@ -71,28 +69,29 @@ def dictDiffit(diff):
     return lambda A, B: _dictDiffit(A, B, diff)
 
 
+@six.python_2_unicode_compatible
 class DiffitObj(object):
 
     def __init__(self, A, B, diffit):
         self.diffit = diffit
         self.difference = tuple(diffit(A, B))
 
-    def repr_diff(self, t):
+    def str_diff(self, t):
         k, l, r, d = t
         if l is None:
-            return "+%s (%s)" % (str(k), r)
+            return "+%s (%s)" % (k, r)
         if r is None:
-            return "-%s (%s)" % (str(k), l)
-        return "~%s %s" % (k, repr(d).replace("\n", "\n  "))
+            return "-%s (%s)" % (k, l)
+        return "~%s %s" % (k, six.text_type(d).replace("\n", "\n  "))
 
     @property
     def differ(self):
         return len(self.difference) != 0
 
-    def __repr__(self):
+    def __str__(self):
         if not self.differ:
             return "(no difference)"
-        return "(\n%s)" % "\n".join(map(self.repr_diff,
+        return "(\n%s)" % "\n".join(map(self.str_diff,
                                         self.difference))
 
 

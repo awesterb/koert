@@ -1,11 +1,9 @@
+import six
 
 # returns the information (in a JSON-friendly manner)
 # needed to present a user with
 # its current balance based on the specified paths to
 # said user's creditor and debitor account.
-
-
-from builtins import str
 
 
 def get_user_balance(book, creditors_account, debitors_account):
@@ -34,7 +32,7 @@ def get_user_balance(book, creditors_account, debitors_account):
     muts.sort(key=lambda a: a['date']['timestamp'])
 
     return {
-        "total": str(value),
+        "total": six.text_type(value),
         "mutations": muts,
         "accounts": accounts
     }
@@ -46,11 +44,11 @@ def mut_data(mut):
         "tr": tr.num,
         "tr-description": tr.description,
         "date": {
-            'text': repr(tr.date_posted),
+            'text': six.text_type(tr.date_posted),
             'timestamp': tr.date_posted.date
         },
         "description": mut.memo,
-        "value": str(mut.value)
+        "value": six.text_type(tr(mut.value))
     }
 
 
@@ -77,6 +75,6 @@ def get_debitors(book, creditors_account, debitors_account):
 
     result.sort(key=lambda x: -x[1])
 
-    result = [(name, str(val)) for (name, val) in result]
+    result = [(name, six.text_type(val)) for (name, val) in result]
 
     return result

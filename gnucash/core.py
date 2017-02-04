@@ -1,9 +1,4 @@
-from __future__ import print_function
-from past.builtins import cmp
-from builtins import next
-from builtins import map
-from builtins import range
-from builtins import object
+import six
 from datetime import datetime
 import re
 
@@ -139,54 +134,7 @@ class Book(GcObj):
                     ac, bit))
         return ac
 
-    # returns a pair (L,J,M), where
-    #   L  is a bool which indicates whether s1 <= s2
-    #   J  is a bool which indicates whether there's a 'jump'
-    #      between sr1 and sr2 like
-    #          rvp3.4.5 -> rvp3.5.1
-    #   M  is a bool which indicates whether it's obvious there
-    #      are some Softrefs between sr1 and sr2,
-    #      for instance in this case:
-    #          rvp3.4.5    rvp3.5.7
-    #      if L is False, M is None
-    def _smamsbk_compare(self, sr1, sr2):
-        if sr1 is None:
-            return (True, True, False)
-        L, M = True, False  # We'll see if we're wrong
-        n1, n2 = sr1.number, sr2.number
-        j = 0
-        # j will become the smallest index
-        #  at which n1 and n2 differ or
-        # min(len(n1),len(n2)) if such index does not exist.
-        while j < len(n1) and j < len(n2) and n1[j] == n2[j]:
-            j += 1
-        # We can now see if there is a jump:
-        J = j + 1 < len(n1)
-        # There are three reasons M might be True; they follow below.
-        # Along the way, we'll see if L happens to be False.
-        #  (I)   n2[j+m] != 1 for some m>1
-        for k in range(j + 1, len(n2)):
-            if n2[k] == 1:
-                continue
-            M = True
-            break
-        #  (II)  n2[j] != 1 if j=min(len(n1),len(n2))
-        if j == min(len(n1), len(n2)):
-            if n2[j] != 1:
-                M = True
-            if len(n1) > len(n2):
-                L = False
-                M = None
-            return (L, J, M)
-        # (III) n1[j]
-        if n1[j] > n2[j]:
-            L = False
-            M = None
-        elif n1[j] + 1 < n2[j]:
-            M = True
-        return (L, J, M)
-
-
+@six.python_2_unicode_compatible
 class Account(GcObj):
 
     def __init__(self, fields):
@@ -199,7 +147,7 @@ class Account(GcObj):
         self._children = {}
         self._mutations = []
 
-    def __repr__(self):
+    def __str__(self):
         return "<ac%s>" % self.nice_id
 
     @property
@@ -251,7 +199,7 @@ class Account(GcObj):
     def _create_childrens_shortnames(self):
         todo = {"": list(self.children.values())}
         while len(todo) > 0:
-            shortname, acs = next(iter(todo.items()))
+            shortname, acs = six.next(six.iteritems(todo))
             del todo[shortname]
             if len(acs) == 1:
                 acs[0]._shortname = shortname
@@ -313,17 +261,17 @@ class Account(GcObj):
         return self.path
 
 
+@six.python_2_unicode_compatible
 class Transaction(GcObj):
 
     def __init__(self, fields):
         GcObj.__init__(self, fields)
 
-    def __repr__(self):
+    def __str__(self):
         if self.num:
             return "tr" + self.num
         else:
-            return "<tr %s %s>" % (self.date_posted,
-                                   repr(self.description))
+            return "<tr %s %s>" % (self.date_posted, self.description)
 
     @property
     def splits(self):
@@ -350,6 +298,7 @@ class Transaction(GcObj):
         return self.fields['currency']
 
 
+@six.python_2_unicode_compatible
 class Split(GcObj):
 
     def __init__(self, fields):
@@ -358,7 +307,7 @@ class Split(GcObj):
         self._account = None
         self._transaction = None
 
-    def __unicode__(self):
+    def __str__(self):
         return u"<sp %s %s by tr%s>" % (self.value,
                                         self.account.nice_id,
                                         self.transaction.num)
@@ -406,12 +355,13 @@ class Commodity(GcStruct):
         return self.fields['id']
 
 
+@six.python_2_unicode_compatible
 class TimeStamp(GcStruct):
 
     def __init__(self, fields):
         GcStruct.__init__(self, fields)
 
-    def __repr__(self):
+    def __str__(self):
         return datetime.fromtimestamp(self.date).strftime("%Y-%m-%d")
 
     @property
@@ -421,73 +371,3 @@ class TimeStamp(GcStruct):
     @property
     def ns(self):
         return self.fields['ns']
-
-
-class Softref(object):
-    kinds = ["rvp", "btr",
-                    "bk1", "bk2", "gk", "rk", "lp", "lp-", "kr", "kz",
-                    "bk1-", "bk2-", "gk-", "rk-", "kr-", "kz-",
-                    "vp", "f", "dc"]
-    regexp = re.compile("(%s)([0-9.]+)" % '|'.join(kinds), re.IGNORECASE)
-
-    @classmethod
-    def from_text(cls, text):
-        for token in text.split():
-            for sr in cls.from_token(token):
-                yield sr
-
-    @classmethod
-    def from_token(cls, token):
-        m = cls.regexp.match(token)
-        if m is None:
-            return
-        kind, number_str = m.group(1, 2)
-        bits = number_str.split(".")
-        good_bits = [bit for bit in bits if bit != ""]
-        try:
-            number = tuple(map(int, good_bits))
-        except ValueError as e:
-            raise ValueError("Could not parse %r as Softref: %s"
-                             % (token, e))
-        yield cls(kind=kind, number=number)
-
-    def __init__(self, kind, number):
-        self._kind = kind.lower()
-        self._number = number
-
-    def __cmp__(self, other):
-        if not isinstance(other, Softref):
-            return NotImplemented
-        if self.kind != other.kind:
-            return NotImplemented
-        # NB: Ordering on tuples in Python is lexicographic
-        return cmp(self.number, other.number)
-
-    def __eq__(self, other):
-        if not isinstance(other, Softref):
-            return False
-        if self.kind != other.kind:
-            return False
-        return self.number == other.number
-
-    def __hash__(self):
-        return hash((self.kind, self.number))
-
-    @property
-    def kind(self):
-        return self._kind
-
-    @property
-    def number(self):
-        return self._number
-
-    @property
-    def number_str(self):
-        return '.'.join(map(str, self._number))
-
-    def __repr__(self):
-        return "<Softref %s>" % self.code
-
-    @property
-    def code(self):
-        return self.kind + self.number_str

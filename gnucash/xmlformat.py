@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from .core import Book, Account, Transaction, Split, TimeStamp, File, \
     Commodity
 from koert.sax.core import StackingHandler, CharactersSH, TimeSH, \

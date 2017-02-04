@@ -1,4 +1,3 @@
-from __future__ import print_function
 from koert.gnucash.tools import open_gcf
 from koert.gnucash.diff import GcStructDiff
 import os.path
