@@ -1,5 +1,3 @@
-from builtins import map
-from builtins import object
 from xml.sax.handler import ContentHandler as SaxHandler
 from decimal import Decimal
 import time
