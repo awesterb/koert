@@ -1,6 +1,5 @@
 import six
 from datetime import datetime
-import re
 
 
 class GcStruct(object):
@@ -133,6 +132,7 @@ class Book(GcObj):
                 raise KeyError("%s has no child named %s" % (
                     ac, bit))
         return ac
+
 
 @six.python_2_unicode_compatible
 class Account(GcObj):

@@ -35,8 +35,8 @@ class EqDiff(object):
     def __str__(self):
         if not self.differ:
             return "(equal)"
-        return "(inequal: %s vs %s)" % tuple(map(six.text_type, 
-            self.difference))
+        return "(inequal: %s vs %s)" \
+            % tuple(map(six.text_type, self.difference))
 
 
 class InDiff(object):
