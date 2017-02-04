@@ -9,7 +9,6 @@ import six
 def get_user_balance(book, accounts):
     trs = set([])
     accounts = set(accounts)
-    value = 0
 
     for account in accounts:
         try:
@@ -19,43 +18,51 @@ def get_user_balance(book, accounts):
             continue
         for mut in ac.mutations:
             trs.add(mut.transaction)
-            value += mut.value
 
     trs = list(trs)
 
     trs.sort(key=lambda a: a.date_posted.date)
 
-    trs = [tr_data(tr, accounts) for tr in trs]
+    sumptr = [0]
+    trs = [tr_data(tr, accounts, sumptr) for tr in trs]
 
     # MsgPack can't serialize sets
     accounts = dict([(account, None) for account in accounts])
 
     return {
-        "total": six.text_type(value),
+        "total": six.text_type(sumptr[0]),
         "trs": trs,
         "accounts": accounts
     }
 
 
-def tr_data(tr, accounts):
+def tr_data(tr, accounts, sumptr):
     return {
-        "tr": tr.num,
+        "num": tr.num,
         "description": tr.description,
         "date": {
-            'text': six.text_type(tr.date_posted),
-            'timestamp': tr.date_posted.date
-        },
-        "muts": [mut_data(mut, accounts) for mut in six.itervalues(tr.splits)]
-    }
+            'text': six.text_type(
+                tr.date_posted),
+            'timestamp': tr.date_posted.date},
+        "muts": [
+            mut_data(
+                mut,
+                accounts,
+                sumptr) for mut in six.itervalues(
+                tr.splits)]}
 
 
-def mut_data(mut, accounts):
+def mut_data(mut, accounts, sumptr):
     path = mut.account.path
+    counts = (path in accounts)
+    if counts:
+        sumptr[0] += mut.value
     return {
         "memo": mut.memo,
         "value": six.text_type(mut.value),
         "account": path,
-        "counts": (path in accounts)
+        "counts": counts,
+        "sum": six.text_type(sumptr[0])
     }
 
 
