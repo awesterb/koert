@@ -3,52 +3,56 @@ import six
 # returns the information (in a JSON-friendly manner)
 # needed to present a user with
 # its current balance based on the specified paths to
-# said user's creditor and debitor account.
+# said user's creditor and debitors accounts.
 
 
-def get_user_balance(book, creditors_account, debitors_account):
-    muts = []
+def get_user_balance(book, accounts):
+    trs = set([])
+    accounts = set(accounts)
     value = 0
-    accounts = {}
 
-    try:
-        dac = book.ac_by_path(debitors_account)
-        accounts["creditor"] = creditors_account
-        for mut in dac.mutations:
-            muts.append(mut_data(mut))
+    for account in accounts:
+        try:
+            ac = book.ac_by_path(account)
+        except KeyError:
+            accounts.delete(account)
+            continue
+        for mut in ac.mutations:
+            trs.add(mut.transaction)
             value += mut.value
-    except KeyError:
-        pass
 
-    try:
-        cac = book.ac_by_path(creditors_account)
-        accounts["debitor"] = debitors_account
-        for mut in cac.mutations:
-            muts.append(mut_data(mut))
-            value += mut.value
-    except KeyError:
-        pass
+    trs = list(trs)
 
-    muts.sort(key=lambda a: a['date']['timestamp'])
+    trs.sort(key=lambda a: a.date_posted.date)
+
+    trs = [tr_data(tr, accounts) for tr in trs]
 
     return {
         "total": six.text_type(value),
-        "mutations": muts,
+        "trs": trs,
         "accounts": accounts
     }
 
 
-def mut_data(mut):
-    tr = mut.transaction
+def tr_data(tr, accounts):
     return {
         "tr": tr.num,
-        "tr-description": tr.description,
+        "description": tr.description,
         "date": {
             'text': six.text_type(tr.date_posted),
             'timestamp': tr.date_posted.date
         },
-        "description": mut.memo,
-        "value": six.text_type(mut.value)
+        "muts": [mut_data(mut, accounts) for mut in six.itervalues(tr.splits)]
+    }
+
+
+def mut_data(mut, accounts):
+    path = mut.account.path
+    return {
+        "memo": mut.memo,
+        "value": six.text_type(mut.value),
+        "account": path,
+        "counts": (path in accounts)
     }
 
 

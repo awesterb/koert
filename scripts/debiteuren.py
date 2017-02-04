@@ -24,9 +24,9 @@ def main():
 
     if args.name is not None:
         print(get_user_balance(book,
-                               args.creditors_account + ":" + args.name,
+                               [args.creditors_account + ":" + args.name,
                                args.debitors_account
-                               + ":" + args.name)['mutations'])
+                               + ":" + args.name]))
     else:
         print(get_debitors(book,
                            args.creditors_account, args.debitors_account))
