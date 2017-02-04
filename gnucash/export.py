@@ -37,6 +37,7 @@ def get_user_balance(book, accounts):
 
 
 def tr_data(tr, accounts, sumptr):
+    before = sumptr[0]
     return {
         "num": tr.num,
         "description": tr.description,
@@ -49,7 +50,9 @@ def tr_data(tr, accounts, sumptr):
                 mut,
                 accounts,
                 sumptr) for mut in six.itervalues(
-                tr.splits)]}
+                tr.splits)],
+        "value": six.text_type(sumptr[0]-before),
+        "sum": six.text_type(sumptr[0])}
 
 
 def mut_data(mut, accounts, sumptr):
