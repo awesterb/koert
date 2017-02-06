@@ -14,7 +14,7 @@ def get_user_balance(book, accounts):
         try:
             ac = book.ac_by_path(account)
         except KeyError:
-            accounts.delete(account)
+            accounts.remove(account)
             continue
         for mut in ac.mutations:
             trs.add(mut.transaction)
