@@ -9,15 +9,17 @@ import six
 def get_user_balance(book, accounts):
     trs = set([])
     accounts = set(accounts)
+    accounts_to_remove = set()
 
     for account in accounts:
         try:
             ac = book.ac_by_path(account)
         except KeyError:
-            accounts.remove(account)
+            accounts_to_remove.add(account)
             continue
         for mut in ac.mutations:
             trs.add(mut.transaction)
+    accounts -= accounts_to_remove
 
     trs = list(trs)
 
