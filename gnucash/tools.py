@@ -7,10 +7,10 @@ import yaml
 import io
 from warnings import warn
 from subprocess import Popen, PIPE
+from git import Repo
 
 
 def open_gcf_in_git_repo(repopath, filepath, cachepath=None):
-    from git import Repo
 
     repo = Repo(repopath)
     commit = repo.head.commit
