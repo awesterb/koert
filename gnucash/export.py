@@ -53,7 +53,7 @@ def tr_data(tr, accounts, sumptr):
                 accounts,
                 sumptr) for mut in six.itervalues(
                 tr.splits)],
-        "value": six.text_type(sumptr[0]-before),
+        "value": six.text_type(sumptr[0] - before),
         "sum": six.text_type(sumptr[0])}
 
 
@@ -71,29 +71,20 @@ def mut_data(mut, accounts, sumptr):
     }
 
 
-def get_debitors(book, creditors_account, debitors_account):
-    result = []
-    names = set()
+def get_debitors(book, accounts):
+    result = dict()
 
-    cac = book.ac_by_path(creditors_account)
-    names.update(iter(cac.children.keys()))
+    for path in accounts:
+        ac = book.ac_by_path(path)
+        for name in ac.children:
+            if name not in result:
+                result[name] = 0
+            for mut in ac.children[name].mutations:
+                result[name] += mut.value
 
-    dac = book.ac_by_path(debitors_account)
-    names.update(iter(dac.children.keys()))
-
-    for name in names:
-        value = 0
-        if name in cac.children:
-            for mut in cac.children[name].mutations:
-                value += mut.value
-        if name in dac.children:
-            for mut in dac.children[name].mutations:
-                value += mut.value
-        if value > 0:
-            result.append((name, value))
-
+    result = [(name, result[name]) for name in result]
     result.sort(key=lambda x: -x[1])
 
-    result = [(name, six.text_type(val)) for (name, val) in result]
+    result = [(name, six.text_type(val)) for (name, val) in result if val > 0]
 
     return result

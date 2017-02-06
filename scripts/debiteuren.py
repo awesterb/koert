@@ -29,7 +29,7 @@ def main():
                                 + ":" + args.name]))
     else:
         print(get_debitors(book,
-                           args.creditors_account, args.debitors_account))
+                           [args.creditors_account, args.debitors_account]))
 
 
 if __name__ == "__main__":
