@@ -1,5 +1,6 @@
 import six
 from datetime import datetime
+from decimal import Decimal
 
 
 class GcStruct(object):
@@ -69,7 +70,7 @@ class Book(GcObj):
     def _handle_split(self, sp, tr):
         sp._account = self.accounts[sp.account_id]
         sp._transaction = tr
-        sp.account.mutations.append(sp)
+        sp.account.transactions.append(tr)
 
     def _handle_root_ac(self, ac):
         if ac.type != 'ROOT':
@@ -144,10 +145,12 @@ class Account(GcObj):
         self._path = None
         self._shortpath = None
         self._shortname = None
+        self._days = None
         # the following are set by the Book
         self._parent = None
         self._children = {}
-        self._mutations = []
+        self._transactions = []
+        self.is_opening_balance = False
 
     def __str__(self):
         return "<ac%s>" % self.nice_id
@@ -238,7 +241,13 @@ class Account(GcObj):
 
     @property
     def mutations(self):
-        return self._mutations
+        for tr in self._transactions:
+            for split in tr.splits[self.id]:
+                yield split
+
+    @property
+    def transactions(self):
+        return self._transactions
 
     def get_descendants(self):
         todo = [self]
@@ -262,12 +271,64 @@ class Account(GcObj):
     def nice_id(self):
         return self.path
 
+    @property
+    def days(self):
+        if not self._days:
+            self._create_days()
+        return self._days
+
+    @property
+    def opening_day(self):
+        return self.days[""]
+
+    def _create_days(self):
+        days = dict()
+        days[""] = AccountDay("", self)
+        for tr in self.transactions:
+            day = tr.day
+            if day not in days:
+                days[day] = AccountDay(day, self)
+            days[day].transactions.append(tr)
+            for split in six.itervalues(tr.splits):
+                if split.account == self:
+                    days[day].value += split.value
+
+        self._days = days
+
+        keys = sorted(six.iterkeys(days))
+        previous = None
+        for key in keys:
+            days[key].previous_day = previous
+            if previous is not None:
+                previous.next_day = days[key]
+                days[key].starting_balance = previous.ending_balance
+            else:
+                days[key].starting_balance = Decimal(0)
+            previous = days[key]
+
+
+class AccountDay:
+
+    def __init__(self, day, account):
+        self.day = day
+        self.account = account
+        self.transactions = []
+        self.value = Decimal(0)
+        self.previous_day = None
+        self.next_day = None
+        self.starting_balance = None
+
+    @property
+    def ending_balance(self):
+        return self.starting_balance + self.value
+
 
 @six.python_2_unicode_compatible
 class Transaction(GcObj):
 
     def __init__(self, fields):
         GcObj.__init__(self, fields)
+        self._day = None
 
     def __str__(self):
         if self.num:
@@ -298,6 +359,19 @@ class Transaction(GcObj):
     @property
     def currency(self):
         return self.fields['currency']
+
+    @property
+    def day(self):
+        if self._day is None:
+            self._create_day()
+        return self._day
+
+    def _create_day(self):
+        for split in six.itervalues(self.splits):
+            if split.account.is_opening_balance:
+                self._day = ""
+                return
+        self._day = six.text_type(self.date_posted)
 
 
 @six.python_2_unicode_compatible
