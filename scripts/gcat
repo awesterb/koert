@@ -4,6 +4,7 @@ from koert.gnucash.balance import get_opening_balance, get_balance_at, get_flow
 from time import mktime, strptime
 import argparse
 import os.path
+import six
 
 
 def parse_args():
@@ -23,6 +24,10 @@ def parse_args():
     lsacp = sp.add_parser("lsac", description="List accounts")
     lsacp.set_defaults(command=lsac)
     lsacp.add_argument("account", type=str)
+
+    trp = sp.add_parser("tr", description="Show transaction")
+    trp.set_defaults(command=showtr)
+    trp.add_argument("number")
 
     flowp = sp.add_parser("flow",
                           description="Show flow in a given period")
@@ -98,6 +103,22 @@ def flow(book, args):
         if len(comps) == 2:
             print("%65s %10s" % ("", fac[0]))
             print("%65s %10s" % ("", fac[1]))
+
+
+def showtr(book, args):
+    num = args.number
+    if num not in book.trs_by_num:
+        print("there is no transaction with number %s" % (num,))
+        return
+    for tr in book.trs_by_num[num]:
+        print_tr(tr)
+
+
+def print_tr(tr):
+    print("%4s %10s %s" % (tr.num, tr.date_posted, tr.description))
+    for split in six.itervalues(tr.splits):
+        memo = split.memo if split.memo else ""
+        print(" %10s %s %s" % (split.value, split.account.path, memo)) 
 
 
 if __name__ == "__main__":

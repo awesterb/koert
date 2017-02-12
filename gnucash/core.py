@@ -114,6 +114,8 @@ class Book(GcObj):
 
     def tr_by_num(self, num):
         trs = self.trs_by_num[num]
+        if not trs:
+            raise KeyError()
         if len(trs) != 1:
             raise ValueError("there are multiple transactions, "
                              "%s, with the same number %s" %
