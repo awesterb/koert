@@ -136,17 +136,51 @@ class Book(GcObj):
                     ac, bit))
         return ac
 
+    def apply_census_token(self, token):
+        for tr in six.itervalues(self.transactions):
+            if tr.description.startswith(token):
+                tr.is_census = True
+
 
 ACCOUNT_SIGNS = {
-        'CASH': 0,
-        'BANK': 0,
-        'EQUITY': 0,
-        'EXPENSE': 1,
-        'ASSET': 0,
-        'INCOME': -1,
-        'LIABILITY': 0,
-        'PAYABLE': 0,
-        }
+    'CASH': {
+        'balance': 1,
+        'mutation': 0,
+    },
+    'BANK': {
+        'balance': 1,
+        'mutation': 0
+    },
+    'EQUITY': {
+        'balance': 0,
+        'mutation': 0
+    },
+    'EXPENSE': {
+        'balance': 1,
+        'mutation': 1
+    },
+    'ASSET': {
+        'balance': 1,
+        'mutation': 0,
+    },
+    'INCOME': {
+        'balance': -1,
+        'mutation': -1,
+    },
+    'LIABILITY': {
+        'balance': -1,
+        'mutation': 0
+    },
+    'PAYABLE': {
+        'balance': -1,
+        'mutation': 0
+    },
+    'ROOT': {
+        'balance': 0,
+        'mutation': 0
+    }
+}
+
 
 @six.python_2_unicode_compatible
 class Account(GcObj):
@@ -318,16 +352,19 @@ class Account(GcObj):
             previous = days[key]
 
     @property
-    def type(self):
-        return self.fields['type']
-
-    @property
-    def sign(self):
+    def mutation_sign(self):
         if self.type not in ACCOUNT_SIGNS:
             raise KeyError('unknown account type %r' % (self.type,))
-        return ACCOUNT_SIGNS[self.type]
+        return ACCOUNT_SIGNS[self.type]['mutation']
+
+    @property
+    def balance_sign(self):
+        if self.type not in ACCOUNT_SIGNS:
+            raise KeyError('unknown account type %r' % (self.type,))
+        return ACCOUNT_SIGNS[self.type]['balance']
 
 
+@six.python_2_unicode_compatible
 class AccountDay:
 
     def __init__(self, day, account):
@@ -343,6 +380,9 @@ class AccountDay:
     def ending_balance(self):
         return self.starting_balance + self.value
 
+    def __str__(self):
+        return "<%s of %s>" % (self.day, self.account.path)
+
 
 @six.python_2_unicode_compatible
 class Transaction(GcObj):
@@ -350,6 +390,7 @@ class Transaction(GcObj):
     def __init__(self, fields):
         GcObj.__init__(self, fields)
         self._day = None
+        self.is_census = False
 
     def __str__(self):
         if self.num:
@@ -459,10 +500,18 @@ class TimeStamp(GcStruct):
         GcStruct.__init__(self, fields)
 
     def __str__(self):
-        return datetime.fromtimestamp(self.date).strftime("%Y-%m-%d")
+        return self.datetime.strftime("%Y-%m-%d")
+
+    @property
+    def datetime(self):
+        return datetime.fromtimestamp(self.timestamp)
 
     @property
     def date(self):
+        return self.datetime.date()
+
+    @property
+    def timestamp(self):
         return self.fields['date']
 
     @property

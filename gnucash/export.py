@@ -23,7 +23,7 @@ def get_user_balance(book, accounts):
 
     trs = list(trs)
 
-    trs.sort(key=lambda a: a.date_posted.date)
+    trs.sort(key=lambda a: a.date_posted.timestamp)
 
     sumptr = [0]
     trs = [tr_data(tr, accounts, sumptr) for tr in trs]
@@ -46,7 +46,7 @@ def tr_data(tr, accounts, sumptr):
         "date": {
             'text': six.text_type(
                 tr.date_posted),
-            'timestamp': tr.date_posted.date},
+            'timestamp': tr.date_posted.timestamp},
         "muts": [
             mut_data(
                 mut,

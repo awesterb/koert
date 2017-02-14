@@ -132,7 +132,10 @@ def open_yaml(path):
         gcf = open_gcf(gcf_path, cachepath=cache_path)
     if 'meta' in d:
         gcf.meta = d['meta']
+        gcf.book.meta = gcf.meta
     if 'opening balance' in d:
         gcf.book.ac_by_path(d['opening balance']).is_opening_balance = True
+    if 'census token' in d:
+        gcf.book.apply_census_token(d['census token'])
 
     return gcf

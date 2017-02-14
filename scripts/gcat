@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from koert.gnucash.tools import open_gcf, open_gcf_in_git_repo, open_yaml
 from koert.gnucash.balance import get_opening_balance, get_balance_at, get_flow
+from koert.gnucash import core as gnucash
+from koert.checks import core as checks
 from time import mktime, strptime
 import argparse
 import os.path
@@ -32,6 +34,9 @@ def parse_args():
     acp = sp.add_parser("ac", description="Show account")
     acp.set_defaults(command=command_ac)
     acp.add_argument("path")
+
+    checkp = sp.add_parser("check", description="Check for errorst")
+    checkp.set_defaults(command=command_check)
 
     flowp = sp.add_parser("flow",
                           description="Show flow in a given period")
@@ -124,18 +129,22 @@ def command_ac(book, args):
     day = ac.opening_day
 
     while day is not None:
-        print("%s - %s -- %s --> %s (%s transactions)" % (
-            day.day,
-            day.starting_balance,
-            day.value,
-            day.ending_balance,
-            len(day.transactions)))
-        for tr in day.transactions:
-            print(" %4s %s" % (tr.num, tr.description))
-            print_splits(tr, account=ac)
-            print("")
-        print("")
+        print_acday(day, account=ac)
         day = day.next_day
+
+
+def print_acday(day, account=None):
+    print("%s - %s -- %s --> %s (%s transactions)" % (
+        day.day,
+        day.starting_balance,
+        day.value,
+        day.ending_balance,
+        len(day.transactions)))
+    for tr in day.transactions:
+        print(" %4s %s" % (tr.num, tr.description))
+        print_splits(tr, account=account)
+        print("")
+    print("")
 
 
 def print_tr(tr):
@@ -151,6 +160,24 @@ def print_splits(tr, account=None):
             (split.value,
              split.account.path if split.account != account else "~",
              memo))
+
+
+def print_obj(obj):
+    if isinstance(obj, gnucash.Transaction):
+        print_tr(obj)
+    if isinstance(obj, gnucash.AccountDay):
+        print_acday(obj)
+
+
+def command_check(book, args):
+    for result in checks.check_all(book):
+        print("%s %s %s" % (
+            result['object'],
+            result['check']['name'],
+            result['check']['description']))
+        print("")
+        print_obj(result['object'])
+        print("")
 
 
 if __name__ == "__main__":

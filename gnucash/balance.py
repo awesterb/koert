@@ -47,9 +47,9 @@ def get_opening_balance(book, obaccount):
 # ############# INTERNALS ####################################################
 
 def tr_in_period(tr, begin, end):
-    if end and tr.date_posted.date > end:
+    if end and tr.date_posted.timestamp > end:
         return False
-    if begin and tr.date_posted.date < begin:
+    if begin and tr.date_posted.timestamp < begin:
         return False
     return True
 
