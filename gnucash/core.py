@@ -137,6 +137,17 @@ class Book(GcObj):
         return ac
 
 
+ACCOUNT_SIGNS = {
+        'CASH': 0,
+        'BANK': 0,
+        'EQUITY': 0,
+        'EXPENSE': 1,
+        'ASSET': 0,
+        'INCOME': -1,
+        'LIABILITY': 0,
+        'PAYABLE': 0,
+        }
+
 @six.python_2_unicode_compatible
 class Account(GcObj):
 
@@ -305,6 +316,16 @@ class Account(GcObj):
             else:
                 days[key].starting_balance = Decimal(0)
             previous = days[key]
+
+    @property
+    def type(self):
+        return self.fields['type']
+
+    @property
+    def sign(self):
+        if self.type not in ACCOUNT_SIGNS:
+            raise KeyError('unknown account type %r' % (self.type,))
+        return ACCOUNT_SIGNS[self.type]
 
 
 class AccountDay:
