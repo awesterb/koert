@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from koert.gnucash.tools import open_gcf, open_gcf_in_git_repo, open_yaml
 from koert.gnucash.balance import get_opening_balance, get_balance_at, get_flow
-from koert.gnucash import core as gnucash
+from koert.gnucash import core as gnucash, export
 from koert.checks import core as checks
 from time import mktime, strptime
 import argparse
@@ -37,6 +37,10 @@ def parse_args():
 
     checkp = sp.add_parser("check", description="Check for errorst")
     checkp.set_defaults(command=command_check)
+
+    exportp = sp.add_parser("export", description="Export objects")
+    exportp.set_defaults(command=command_export)
+    exportp.add_argument("handle")
 
     flowp = sp.add_parser("flow",
                           description="Show flow in a given period")
@@ -178,6 +182,10 @@ def command_check(book, args):
         print("")
         print_obj(result['object'])
         print("")
+
+
+def command_export(book, args):
+    print(repr(export.export(book.obj_by_handle(args.handle))))
 
 
 if __name__ == "__main__":
