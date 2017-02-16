@@ -141,6 +141,12 @@ class Book(GcObj):
             if tr.description.startswith(token):
                 tr.is_census = True
 
+    def obj_by_handle(self, handle):
+        if handle.startswith("tr"):
+            return self.tr_by_num(handle[2:])
+        if handle.startswith(":"):
+            return self.ac_by_path(handle)
+
 
 ACCOUNT_SIGNS = {
     'CASH': {
