@@ -1,4 +1,5 @@
 import six
+from koert.gnucash import core as gnucash
 
 # returns the information (in a JSON-friendly manner)
 # needed to present a user with
@@ -88,3 +89,55 @@ def get_debitors(book, accounts):
     result = [(name, six.text_type(val)) for (name, val) in result if val > 0]
 
     return result
+
+
+def export(obj):
+    if isinstance(obj, gnucash.Account):
+        return _export_ac(obj)
+    elif isinstance(obj, gnucash.Transaction):
+        return _export_tr(obj)
+
+
+def _export_ac(ac):
+    return {
+        'type': 'account',
+        'path': ac.path,
+        'id': ac.id,
+        'ac_type': ac.type,
+        'description': ac.description,
+        'children': list(six.iterkeys(ac.children)),
+        'days': [_export_acday(day) for day in six.itervalues(ac.days)],
+    }
+
+
+def _export_acday(acday):
+    return {
+        'type': 'accountday',
+        'account': acday.account.path,
+        'date': acday.day,
+        'starting_balance': six.text_type(acday.starting_balance),
+        'ending_balance': six.text_type(acday.ending_balance),
+        'value': six.text_type(acday.value),
+        'transactions': [_export_tr(tr) for tr in acday.transactions]
+    }
+
+
+def _export_tr(tr):
+    return {
+        'type': 'transaction',
+        'id': tr.id,
+        'num': tr.num,
+        'day': tr.day,
+        'description': tr.description,
+        'splits': [_export_sp(sp) for sp in six.itervalues(tr.splits)]
+    }
+
+
+def _export_sp(sp):
+    return {
+        'type': 'split',
+        'id': sp.id,
+        'account': sp.account.path,
+        'memo': sp.memo,
+        'value': six.text_type(sp.value)
+    }
