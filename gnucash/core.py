@@ -293,8 +293,9 @@ class Account(GcObj):
     @property
     def mutations(self):
         for tr in self._transactions:
-            for split in tr.splits[self.id]:
-                yield split
+            for split in tr.splits.values():
+                if split.account == self:
+                    yield split
 
     @property
     def transactions(self):
