@@ -160,7 +160,7 @@ class Book(GcObj):
         if handle == "" or handle.startswith(":"):
             return (self.ac_by_path(handle),)
         if handle.startswith("tr"):
-            return self.trs_by_num.get(handle[2:], default=())
+            return self.trs_by_num.get(handle[2:], ())
         if handle.startswith("id"):
             obj = self.obj_by_id.get(handle[2:])
             return (obj,) if obj is not None else ()
