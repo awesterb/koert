@@ -185,7 +185,8 @@ def command_check(book, args):
 
 
 def command_export(book, args):
-    print(repr(export.export(book.obj_by_handle(args.handle))))
+    for obj in book.obj_by_handle(args.handle):
+        print(repr(export.export(obj)))
 
 
 if __name__ == "__main__":

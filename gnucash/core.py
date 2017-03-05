@@ -40,6 +40,7 @@ class Book(GcObj):
         self._root = None
         self._set_account_refs()
         self._trs_by_num = None
+        self._obj_by_id = None
 
     def _set_account_refs(self):
         for ac in self.accounts.values():
@@ -113,6 +114,20 @@ class Book(GcObj):
             res[num] += (tr,)
         self._trs_by_num = res
 
+    @property
+    def obj_by_id(self):
+        if self._obj_by_id is None:
+            self._set_obj_by_id()
+        return self._obj_by_id
+
+    def _set_obj_by_id(self):
+        objs = {}
+        for tr in self.transactions.values():
+            objs[tr.id] = tr
+        for ac in self.accounts.values():
+            objs[ac.id] = ac
+        self._obj_by_id = objs
+
     def tr_by_num(self, num):
         trs = self.trs_by_num[num]
         if not trs:
@@ -142,10 +157,13 @@ class Book(GcObj):
                 tr.is_census = True
 
     def obj_by_handle(self, handle):
-        if handle.startswith("tr"):
-            return self.tr_by_num(handle[2:])
         if handle == "" or handle.startswith(":"):
-            return self.ac_by_path(handle)
+            return (self.ac_by_path(handle),)
+        if handle.startswith("tr"):
+            return self.trs_by_num.get(handle[2:], default=())
+        if handle.startswith("id"):
+            obj = self.obj_by_id.get(handle[2:])
+            return (obj,) if obj is not None else ()
 
 
 ACCOUNT_SIGNS = {
