@@ -82,8 +82,8 @@ def load_cache(cachepath, mtime):
 
 
 def update_cache(cachepath, gcf):
-    if sys.getrecursionlimit() < 2000:
-        sys.setrecursionlimit(2000)
+    if sys.getrecursionlimit() < 3000:
+        sys.setrecursionlimit(3000)
     with open(cachepath, "wb") as f:
         try:
             pickle.dump((get_commit_name(), gcf), f)
