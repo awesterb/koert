@@ -107,6 +107,8 @@ def _export_ac(ac):
         'description': ac.description,
         'children': list(six.iterkeys(ac.children)),
         'days': [_export_acday(day) for day in six.itervalues(ac.days)],
+        'balance': ac.balance,
+        'opening_balance': ac.opening_balance,
     }
 
 

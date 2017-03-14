@@ -71,7 +71,9 @@ class Book(GcObj):
     def _handle_split(self, sp, tr):
         sp._account = self.accounts[sp.account_id]
         sp._transaction = tr
-        sp.account.transactions.append(tr)
+        if tr.id not in sp.account._transactions_ids:
+            sp.account.transactions.append(tr)
+            sp.account._transactions_ids.add(tr.id)
 
     def _handle_root_ac(self, ac):
         if ac.type != 'ROOT':
@@ -220,6 +222,9 @@ class Account(GcObj):
         self._children = {}
         self._transactions = []
         self.is_opening_balance = False
+        self._opening_balance = None
+        self._balance = None
+        self._transactions_ids = set()
 
     def __str__(self):
         return "<ac%s>" % self.nice_id
@@ -388,6 +393,31 @@ class Account(GcObj):
             raise KeyError('unknown account type %r' % (self.type,))
         return ACCOUNT_SIGNS[self.type]['balance']
 
+    def get_balance_on(self, day):
+        total = Decimal(0)
+        for child in six.itervalues(self.children):
+            total += child.get_balance_on(day)
+        return total + self.get_last_acday_before(day).ending_balance
+
+    def get_last_acday_before(self, day):
+        acday = self.opening_day
+        while True:
+            nextad = acday.next_day
+            if nextad == None or nextad.is_after(day):
+                return acday
+            acday = nextad
+
+    @property
+    def opening_balance(self):
+        if self._opening_balance==None:
+            self._opening_balance = self.get_balance_on("")
+        return self._opening_balance
+
+    @property
+    def balance(self):
+        if self._balance==None:
+            self._balance = self.get_balance_on(None)
+        return self._balance
 
 @six.python_2_unicode_compatible
 class AccountDay:
@@ -407,6 +437,14 @@ class AccountDay:
 
     def __str__(self):
         return "<%s of %s>" % (self.day, self.account.path)
+
+    def is_after(self, day):
+        if day==None:
+            return False
+        if day=="":
+            return self.day!=""
+        return datetime.strptime(self.day, "%Y-%m-%d") < \
+                datetime.strptime(day, "%Y-%m-%d")
 
 
 @six.python_2_unicode_compatible
