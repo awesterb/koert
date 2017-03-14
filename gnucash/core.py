@@ -13,6 +13,13 @@ class GcObj(GcStruct):
 
     def __init__(self, fields):
         GcStruct.__init__(self, fields)
+        self._checks = None
+
+    @property
+    def checks(self):
+        if self._checks == None:
+            self._checks = []
+        return self._checks
 
     @property
     def id(self):
@@ -430,6 +437,13 @@ class AccountDay:
         self.previous_day = None
         self.next_day = None
         self.starting_balance = None
+        self._checks = None
+
+    @property
+    def checks(self):
+        if self._checks == None:
+            self._checks = []
+        return self._checks
 
     @property
     def ending_balance(self):

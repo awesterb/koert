@@ -46,6 +46,10 @@ def check_all(book):
         for obj in _CHECK_ALL_SWITCH[check['per']](book, check):
             yield {'object': obj, 'check': check}
 
+def mark_all(book):
+    for result in check_all(book):
+        result['object'].checks.append(result['check'])
+        book.checks.append(result)
 
 def check_all_splits(book, check):
     for tr in six.itervalues(book.transactions):

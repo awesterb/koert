@@ -1,4 +1,5 @@
 from koert.gnucash.xmlformat import SaxHandler
+from koert.checks import core as checks
 import gzip
 import os.path
 import pickle
@@ -10,14 +11,14 @@ from subprocess import Popen, PIPE
 from git import Repo
 
 
-def open_gcf_in_git_repo(repopath, filepath, cachepath=None):
+def open_gcf_in_git_repo(repopath, filepath, cachepath=None, updatecache=True):
 
     repo = Repo(repopath)
     commit = repo.head.commit
     mtime = commit.authored_date
     f = io.BytesIO(commit.tree[filepath].data_stream.read())
 
-    result = parse_gcf(f, mtime, cachepath=cachepath)
+    result = parse_gcf(f, mtime, cachepath=cachepath, updatecache=updatecache)
 
     return result
 
@@ -94,7 +95,7 @@ sys.setrecursionlimit.""")
             raise e
 
 
-def parse_gcf(f, mtime, parse=saxparse, cachepath=None):
+def parse_gcf(f, mtime, parse=saxparse, cachepath=None, updatecache=True):
     if cachepath is not None:
         result = load_cache(cachepath, mtime)
         if result:
@@ -103,16 +104,19 @@ def parse_gcf(f, mtime, parse=saxparse, cachepath=None):
     parse(f, handler)
     result = handler.result
     result.mtime = mtime
-    update_cache(cachepath, result)
+    if cachepath is not None:
+        if updatecache:
+            update_cache(cachepath, result)
     return result
 
 
-def open_gcf(filepath, parse=saxparse, cachepath=None):
+def open_gcf(filepath, parse=saxparse, cachepath=None, updatecache=True):
     if cachepath is None:
         cachepath = cache_path(filepath)
     with open(filepath) as f:
         return parse_gcf(f, os.path.getmtime(filepath),
-                         parse=parse, cachepath=cachepath)
+                         parse=parse, cachepath=cachepath,
+                         updatecache=updatecache)
 
 
 def open_yaml(path):
@@ -127,7 +131,8 @@ def open_yaml(path):
     gcf = None
     if 'repo' in d:
         repo_path = os.path.join(dirname, d['repo'])
-        gcf = open_gcf_in_git_repo(repo_path, d['path'], cachepath=cache_path)
+        gcf = open_gcf_in_git_repo(repo_path, d['path'], cachepath=cache_path,
+                updatecache=False)
     else:
         gcf = open_gcf(gcf_path, cachepath=cache_path)
     if 'meta' in d:
@@ -137,5 +142,10 @@ def open_yaml(path):
         gcf.book.ac_by_path(d['opening balance']).is_opening_balance = True
     if 'census token' in d:
         gcf.book.apply_census_token(d['census token'])
+    if 'checks' in d:
+        if d['checks']:
+            checks.mark_all(gcf.book)
+
+    update_cache(cache_path, gcf)
 
     return gcf
