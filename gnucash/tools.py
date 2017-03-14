@@ -132,7 +132,7 @@ def open_yaml(path):
     if 'repo' in d:
         repo_path = os.path.join(dirname, d['repo'])
         gcf = open_gcf_in_git_repo(repo_path, d['path'], cachepath=cache_path,
-                updatecache=False)
+                updatecache=True)
     else:
         gcf = open_gcf(gcf_path, cachepath=cache_path)
     if 'meta' in d:
@@ -145,7 +145,5 @@ def open_yaml(path):
     if 'checks' in d:
         if d['checks']:
             checks.mark_all(gcf.book)
-
-    update_cache(cache_path, gcf)
 
     return gcf
