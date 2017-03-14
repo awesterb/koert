@@ -99,13 +99,21 @@ def export(obj):
 
 
 def _export_ac(ac):
+    children = {}
+    for name, child in six.iteritems(ac.children):
+        children[name] = {
+                "balance": six.text_type(child.balance),
+                "opening_balance": six.text_type(child.opening_balance),
+            }
+
+
     return {
         'type': 'account',
         'path': ac.path,
         'id': ac.id,
         'ac_type': ac.type,
         'description': ac.description,
-        'children': list(six.iterkeys(ac.children)),
+        'children': children,
         'days': [_export_acday(day) for day in six.itervalues(ac.days)],
         'balance': six.text_type(ac.balance),
         'opening_balance': six.text_type(ac.opening_balance),
