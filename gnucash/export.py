@@ -129,7 +129,7 @@ def _export_acday(acday):
         'ending_balance': six.text_type(acday.ending_balance),
         'value': six.text_type(acday.value),
         'transactions': [_export_tr(tr) for tr in acday.transactions],
-        'checks': _export_checks(acday.checks),
+        'checks': export_checks(acday.checks),
     }
 
 
@@ -141,7 +141,7 @@ def _export_tr(tr):
         'day': tr.day,
         'description': tr.description,
         'splits': [_export_sp(sp) for sp in six.itervalues(tr.splits)],
-        'checks': _export_checks(tr.checks),
+        'checks': export_checks(tr.checks),
     }
 
 
@@ -152,11 +152,11 @@ def _export_sp(sp):
         'account': sp.account.path,
         'memo': sp.memo,
         'value': six.text_type(sp.value),
-        'checks': _export_checks(sp.checks),
+        'checks': export_checks(sp.checks),
     }
 
 
-def _export_checks(checks):
+def export_checks(checks):
     return [ _export_check(check) for check in checks ]
 
 def _export_check(check):
