@@ -11,14 +11,20 @@ from subprocess import Popen, PIPE
 from git import Repo
 
 
-def open_gcf_in_git_repo(repopath, filepath, cachepath=None, updatecache=True):
+def open_gcf_in_git_repo(repopath, filepath, cachepath=None, \
+        updatecache=True, onlyafter=None):
 
     repo = Repo(repopath)
     commit = repo.head.commit
     mtime = commit.authored_date
+
+    if onlyafter!=None and mtime <= onlyafter:
+        return None
+
     f = io.BytesIO(commit.tree[filepath].data_stream.read())
 
-    result = parse_gcf(f, mtime, cachepath=cachepath, updatecache=updatecache)
+    result = parse_gcf(f, mtime, cachepath=cachepath, \
+            updatecache=updatecache)
 
     return result
 
@@ -110,18 +116,36 @@ def parse_gcf(f, mtime, parse=saxparse, cachepath=None, updatecache=True):
     return result
 
 
-def open_gcf(filepath, parse=saxparse, cachepath=None, updatecache=True):
+def open_gcf(filepath, parse=saxparse, cachepath=None, updatecache=True, \
+        onlyafter=None):
+
+    mtime = os.path.getmtime(filepath)
+    if onlyafter!=None and mtime <= onlyafter:
+        return None
     if cachepath is None:
         cachepath = cache_path(filepath)
     with open(filepath) as f:
-        return parse_gcf(f, os.path.getmtime(filepath),
+        return parse_gcf(f, mtime,
                          parse=parse, cachepath=cachepath,
                          updatecache=updatecache)
 
 
-def open_yaml(path):
+def open_yaml(path, onlyafter=None):
+    """Loads a gnucash file specified in a yaml file with extra metadata.
+
+    If onlyafter is not None, returns None if both the yaml file and
+    the (commit of the) gnucash file it points to are older than
+    time onlyafter."""
+
     with open(path) as f:
         d = yaml.load(f)
+
+    yamltime = os.path.getmtime(path)
+    
+    if onlyafter!=None and yamltime > onlyafter:
+        # the yaml-file is new, so we don't need any restrictions
+        # on the gnucash file
+        onlyafter = None
 
     dirname = os.path.dirname(path)
     gcf_path = os.path.join(dirname, d['path'])
@@ -132,9 +156,15 @@ def open_yaml(path):
     if 'repo' in d:
         repo_path = os.path.join(dirname, d['repo'])
         gcf = open_gcf_in_git_repo(repo_path, d['path'], cachepath=cache_path,
-                updatecache=True)
+                updatecache=True, onlyafter=onlyafter)
+        if gcf==None:
+            return None
     else:
-        gcf = open_gcf(gcf_path, cachepath=cache_path)
+        gcf = open_gcf(gcf_path, cachepath=cache_path, onlyafter=onlyafter)
+        if gcf==None:
+            return None
+
+    gcf.yamltime = yamltime
     if 'meta' in d:
         gcf.meta = d['meta']
         gcf.book.meta = gcf.meta
