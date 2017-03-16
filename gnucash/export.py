@@ -172,6 +172,8 @@ def _export_check(check):
 
 def export_checks_of_book(book):
     result = []
-    for objcheck in book.checks:
-        result.append({'check':_export_check(objcheck['check']), 'object': objcheck['object'].handle})
+    for name, data in six.iteritems(book.checks):
+        result.append({
+            'check':_export_check(data['check']), 
+            'objects': [ obj.handle for obj in data['objects'] ]})
     return result

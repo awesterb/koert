@@ -48,6 +48,7 @@ class Book(GcObj):
         self._set_account_refs()
         self._trs_by_num = None
         self._obj_by_id = None
+        self._checks = {}
 
     def _set_account_refs(self):
         for ac in self.accounts.values():
