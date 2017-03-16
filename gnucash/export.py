@@ -96,6 +96,10 @@ def export(obj):
         return _export_ac(obj)
     elif isinstance(obj, gnucash.Transaction):
         return _export_tr(obj)
+    elif isinstance(obj, gnucash.AccountDay):
+        return _export_acday(obj)
+    elif isinstance(obj, gnucash.Split):
+        return _export_sp(obj)
 
 
 def _export_ac(ac):
@@ -129,7 +133,7 @@ def _export_acday(acday):
         'ending_balance': six.text_type(acday.ending_balance),
         'value': six.text_type(acday.value),
         'transactions': [_export_tr(tr) for tr in acday.transactions],
-        'checks': export_checks(acday.checks),
+        'checks': _export_checks(acday.checks),
     }
 
 
@@ -141,7 +145,7 @@ def _export_tr(tr):
         'day': tr.day,
         'description': tr.description,
         'splits': [_export_sp(sp) for sp in six.itervalues(tr.splits)],
-        'checks': export_checks(tr.checks),
+        'checks': _export_checks(tr.checks),
     }
 
 
@@ -152,11 +156,11 @@ def _export_sp(sp):
         'account': sp.account.path,
         'memo': sp.memo,
         'value': six.text_type(sp.value),
-        'checks': export_checks(sp.checks),
+        'checks': _export_checks(sp.checks),
     }
 
 
-def export_checks(checks):
+def _export_checks(checks):
     return [ _export_check(check) for check in checks ]
 
 def _export_check(check):
@@ -165,3 +169,9 @@ def _export_check(check):
             'type': check['type'],
             'description': check['description'],
             }
+
+def export_checks_of_book(book):
+    result = []
+    for objcheck in book.checks:
+        result.append({'check':_export_check(objcheck['check']), 'object': objcheck['object'].handle})
+    return result

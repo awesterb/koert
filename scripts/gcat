@@ -43,6 +43,9 @@ def parse_args():
     exportp.set_defaults(command=command_export)
     exportp.add_argument("handle")
 
+    exportp = sp.add_parser("export-checks", description="Export checks")
+    exportp.set_defaults(command=command_export_checks)
+
     flowp = sp.add_parser("flow",
                           description="Show flow in a given period")
     flowp.set_defaults(command=flow)
@@ -186,9 +189,16 @@ def command_check(book, args):
 
 
 def command_export(book, args):
-    for obj in book.obj_by_handle(args.handle):
-        print(repr(export.export(obj)))
+    objs = book.obj_by_handle(args.handle)
+    if len(objs)==0:
+        print("There is no object with handle %s."  % (args.handle,))
+    else:
+        for obj in objs:
+            print(repr(export.export(obj)))
 
+
+def command_export_checks(book, args):
+    print(repr(export.export_checks_of_book(book)))
 
 if __name__ == "__main__":
     main()

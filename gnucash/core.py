@@ -133,6 +133,8 @@ class Book(GcObj):
         objs = {}
         for tr in self.transactions.values():
             objs[tr.id] = tr
+            for sp in six.itervalues(tr.splits):
+                objs[sp.id] = sp
         for ac in self.accounts.values():
             objs[ac.id] = ac
         self._obj_by_id = objs
@@ -173,6 +175,10 @@ class Book(GcObj):
         if handle.startswith("id"):
             obj = self.obj_by_id.get(handle[2:])
             return (obj,) if obj is not None else ()
+        if handle.startswith("day"):
+            day, path = handle[3:].split(":",1)
+            path = ":"+path
+            return (self.ac_by_path(path).days[day],)
 
 
 ACCOUNT_SIGNS = {
@@ -232,6 +238,10 @@ class Account(GcObj):
         self._opening_balance = None
         self._balance = None
         self._transactions_ids = set()
+
+    @property
+    def handle(self):
+        return self.path
 
     def __str__(self):
         return "<ac%s>" % self.nice_id
@@ -440,6 +450,10 @@ class AccountDay:
         self._checks = None
 
     @property
+    def handle(self):
+        return "day%s%s" % (self.day, self.account.path)
+
+    @property
     def checks(self):
         if self._checks == None:
             self._checks = []
@@ -474,6 +488,14 @@ class Transaction(GcObj):
             return "tr" + self.num
         else:
             return "<tr %s %s>" % (self.date_posted, self.description)
+
+    @property
+    def handle(self):
+        if self.num:
+            return "tr" + self.num
+        else:
+            return "id" + self.id
+
 
     @property
     def splits(self):
@@ -521,6 +543,10 @@ class Split(GcObj):
         # set by Book
         self._account = None
         self._transaction = None
+
+    @property
+    def handle(self):
+        return "id" + self.id
 
     def __str__(self):
         return u"<sp %s %s by tr%s>" % (self.value,
