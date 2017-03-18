@@ -170,7 +170,10 @@ class Book(GcObj):
 
     def obj_by_handle(self, handle):
         if handle == "" or handle.startswith(":"):
-            return (self.ac_by_path(handle),)
+            try:
+                return (self.ac_by_path(handle),)
+            except KeyError:
+                return ()
         if handle.startswith("tr"):
             return self.trs_by_num.get(handle[2:], ())
         if handle.startswith("id"):
@@ -179,7 +182,10 @@ class Book(GcObj):
         if handle.startswith("day"):
             day, path = handle[3:].split(":",1)
             path = ":"+path
-            return (self.ac_by_path(path).days[day],)
+            try:
+                return (self.ac_by_path(path).days[day],)
+            except KeyError:
+                return ()
 
 
 ACCOUNT_SIGNS = {
