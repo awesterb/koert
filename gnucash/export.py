@@ -72,21 +72,33 @@ def mut_data(mut, accounts, sumptr):
     }
 
 
-def get_debitors(book, accounts):
+def get_debitors(book, accounts, day=None, onlypositive=True):
     result = dict()
 
+    todo = []
+
     for path in accounts:
-        ac = book.ac_by_path(path)
+        todo.append(book.ac_by_path(path))
+    
+    while len(todo)>0:
+        ac = todo.pop()
+
         for name in ac.children:
+            child = ac.children[name]
+            if len(child.children)>0:
+                todo.append(child)
+                continue
+
             if name not in result:
                 result[name] = 0
-            for mut in ac.children[name].mutations:
-                result[name] += mut.value
+            acday = child.get_last_acday_before(day)
+            result[name] += acday.ending_balance
 
     result = [(name, result[name]) for name in result]
-    result.sort(key=lambda x: -x[1])
+    #result.sort(key=lambda x: -x[1])
+    result.sort(key=lambda x: x[0])
 
-    result = [(name, six.text_type(val)) for (name, val) in result if val > 0]
+    result = [(name, six.text_type(val)) for (name, val) in result if (val>0 and onlypositive) or (val!=0 and not onlypositive)]
 
     return result
 
