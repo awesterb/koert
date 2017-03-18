@@ -134,6 +134,8 @@ def _export_acday(acday):
         'value': six.text_type(acday.value),
         'transactions': [_export_tr(tr) for tr in acday.transactions],
         'checks': _export_checks(acday.checks),
+        'next': acday.next.date if acday.next!=None else None,
+        'previous': acday.previous.date if acday.previous!=None else None
     }
 
 
