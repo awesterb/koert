@@ -152,6 +152,7 @@ def _export_tr(tr):
 def _export_sp(sp):
     return {
         'type': 'split',
+        'tr': sp.transaction.handle,
         'id': sp.id,
         'account': sp.account.path,
         'memo': sp.memo,
