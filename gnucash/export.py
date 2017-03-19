@@ -122,6 +122,8 @@ def _export_ac(ac):
                 "opening_balance": six.text_type(child.opening_balance),
             }
 
+    days = [_export_acday(day) for day in six.itervalues(ac.days)]
+    days.sort(key=lambda day: day.day)
 
     return {
         'type': 'account',
@@ -130,13 +132,16 @@ def _export_ac(ac):
         'ac_type': ac.type,
         'description': ac.description,
         'children': children,
-        'days': [_export_acday(day) for day in six.itervalues(ac.days)],
+        'days': days,
         'balance': six.text_type(ac.balance),
         'opening_balance': six.text_type(ac.opening_balance),
     }
 
 
 def _export_acday(acday):
+    trs = [_export_tr(tr) for tr in acday.transactions]
+    trs.sort(key=lambda trA: tr.num)
+
     return {
         'type': 'accountday',
         'account': acday.account.path,
@@ -144,7 +149,7 @@ def _export_acday(acday):
         'starting_balance': six.text_type(acday.starting_balance),
         'ending_balance': six.text_type(acday.ending_balance),
         'value': six.text_type(acday.value),
-        'transactions': [_export_tr(tr) for tr in acday.transactions],
+        'transactions': trs,
         'checks': _export_checks(acday.checks),
         'next': acday.next_day.day if acday.next_day!=None else None,
         'previous': acday.previous_day.day if acday.previous_day!=None else None
