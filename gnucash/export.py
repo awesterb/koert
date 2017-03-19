@@ -115,12 +115,13 @@ def export(obj):
 
 
 def _export_ac(ac):
-    children = {}
+    children = []
     for name, child in six.iteritems(ac.children):
-        children[name] = {
+        children.append({
+                "name": name,
                 "balance": six.text_type(child.balance),
                 "opening_balance": six.text_type(child.opening_balance),
-            }
+            })
 
     days = [_export_acday(day) for day in six.itervalues(ac.days)]
     days.sort(key=lambda day: day['date'])
