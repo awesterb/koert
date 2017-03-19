@@ -1,7 +1,7 @@
 import six
 from datetime import datetime
 from decimal import Decimal
-
+import re
 
 class GcStruct(object):
 
@@ -163,10 +163,14 @@ class Book(GcObj):
                     ac, bit))
         return ac
 
-    def apply_census_token(self, token):
+    def apply_census(self, regex):
+        e = re.compile(regex)
         for tr in six.itervalues(self.transactions):
-            if tr.description.startswith(token):
-                tr.is_census = True
+            m = e.match(tr.description)
+            if not m:
+                continue
+            tr.is_census = True
+            tr.census = Decimal(m.group("census").replace(",", "."))
 
     def obj_by_handle(self, handle):
         if handle == "" or handle.startswith(":"):
@@ -490,6 +494,7 @@ class Transaction(GcObj):
         GcObj.__init__(self, fields)
         self._day = None
         self.is_census = False
+        self.census = None
 
     def __str__(self):
         if self.num:

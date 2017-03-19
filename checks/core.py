@@ -36,6 +36,13 @@ def check_tr_has_number(book, tr):
 def check_tr_unique_number(book, tr):
     return len(book.trs_by_num[tr.num]) != 1
 
+def check_tr_census(book, tr):
+    if not tr.is_census:
+        return False
+    for sp in six.itervalues(tr.splits):
+        if sp.account.days[tr.day].ending_balance == tr.census:
+            return False
+    return True
 
 def check_day_balance_sign(book, day):
     return day.ending_balance * day.account.balance_sign < 0
@@ -145,4 +152,11 @@ CHECKS = [
         'type': "warning",
         "per": "account-day"
     },
+    {
+            'name': "E05",
+            'func': check_tr_census,
+            'description': "Census does not match ending balance of the day!",
+            'type': 'error',
+            'per': 'transaction'
+        }
 ]
