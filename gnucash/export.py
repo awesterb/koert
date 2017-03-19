@@ -123,7 +123,7 @@ def _export_ac(ac):
             }
 
     days = [_export_acday(day) for day in six.itervalues(ac.days)]
-    days.sort(key=lambda day: day.day)
+    days.sort(key=lambda day: day['day'])
 
     return {
         'type': 'account',
@@ -140,7 +140,7 @@ def _export_ac(ac):
 
 def _export_acday(acday):
     trs = [_export_tr(tr) for tr in acday.transactions]
-    trs.sort(key=lambda trA: tr.num)
+    trs.sort(key=lambda tr: tr['num'])
 
     return {
         'type': 'accountday',
