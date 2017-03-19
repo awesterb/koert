@@ -163,13 +163,15 @@ class Book(GcObj):
                     ac, bit))
         return ac
 
-    def apply_census(self, regex):
+    def apply_census(self, startswith, regex):
         e = re.compile(regex)
         for tr in six.itervalues(self.transactions):
-            m = e.match(tr.description)
-            if not m:
+            if not tr.description.startswith(startswith):
                 continue
             tr.is_census = True
+            m = e.match(tr.description)
+            if m==None:
+                continue
             tr.census = Decimal(m.group("census").replace(",", "."))
 
     def obj_by_handle(self, handle):

@@ -37,12 +37,28 @@ def check_tr_unique_number(book, tr):
     return len(book.trs_by_num[tr.num]) != 1
 
 def check_tr_census(book, tr):
-    if not tr.is_census:
+    if not tr.is_census or tr.census==None:
         return False
     for sp in six.itervalues(tr.splits):
-        if sp.account.days[tr.day].ending_balance == tr.census:
+        ad = sp.account.days[tr.day]
+        if ad.starting_balance == tr.census or ad.ending_balance == tr.census:
             return False
+        # perhaps the desired number appears in the middle of the day
+        total = ad.starting_balance
+        trs = list(ad.transactions)
+        trs.sort(key=lambda tr: tr.num)
+        for tr_ in trs:
+            for sp_ in six.itervalues(tr_.splits):
+                if sp_.account == sp.account:
+                    total += sp_.value
+                if total == tr.census:
+                    return False
     return True
+
+def check_tr_census_wellformed(book, tr):
+    if not tr.is_census:
+        return False
+    return tr.census==None
 
 def check_day_balance_sign(book, day):
     return day.ending_balance * day.account.balance_sign < 0
@@ -153,10 +169,17 @@ CHECKS = [
         "per": "account-day"
     },
     {
-            'name': "E05",
-            'func': check_tr_census,
-            'description': "Census does not match ending balance of the day!",
-            'type': 'error',
-            'per': 'transaction'
-        }
+        'name': "E05",
+        'func': check_tr_census,
+        'description': "Census does not match any balance this day!",
+        'type': 'error',
+        'per': 'transaction'
+    },
+    {
+        'name': "W05",
+        'func': check_tr_census_wellformed,
+        'description': "Is this a census? If so, it does not make sense to me.",
+        'type': 'warning',
+        'per': 'transaction'
+    },
 ]

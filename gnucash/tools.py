@@ -170,8 +170,8 @@ def open_yaml(path, onlyafter=None):
         gcf.book.meta = gcf.meta
     if 'opening balance' in d:
         gcf.book.ac_by_path(d['opening balance']).is_opening_balance = True
-    if 'census regex' in d:
-        gcf.book.apply_census(d['census regex'])
+    if 'census' in d:
+        gcf.book.apply_census(**d['census'])
     if 'checks' in d:
         if d['checks']:
             checks.mark_all(gcf.book)
