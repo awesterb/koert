@@ -186,6 +186,7 @@ class Book(GcObj):
                 return (self.ac_by_path(path).days[day],)
             except KeyError:
                 return ()
+        return ()
 
 
 ACCOUNT_SIGNS = {
