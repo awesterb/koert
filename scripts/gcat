@@ -36,15 +36,16 @@ def parse_args():
     acp.set_defaults(command=command_ac)
     acp.add_argument("path")
 
-    checkp = sp.add_parser("check", description="Check for errorst")
+    checkp = sp.add_parser("check", description="Check for errors")
+    checkp.add_argument("names", nargs="*")
     checkp.set_defaults(command=command_check)
 
     exportp = sp.add_parser("export", description="Export objects")
     exportp.set_defaults(command=command_export)
     exportp.add_argument("handle")
 
-    exportp = sp.add_parser("export-checks", description="Export checks")
-    exportp.set_defaults(command=command_export_checks)
+    exportcp = sp.add_parser("export-checks", description="Export checks")
+    exportcp.set_defaults(command=command_export_checks)
 
     flowp = sp.add_parser("flow",
                           description="Show flow in a given period")
@@ -178,7 +179,7 @@ def print_obj(obj):
 
 
 def command_check(book, args):
-    for result in checks.check_all(book):
+    for result in checks.check_all(book, names=args.names):
         print("%s %s %s" % (
             result['object'],
             result['check']['name'],
@@ -186,6 +187,7 @@ def command_check(book, args):
         print("")
         print_obj(result['object'])
         print("")
+
 
 
 def command_export(book, args):

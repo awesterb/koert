@@ -41,8 +41,10 @@ def check_day_balance_sign(book, day):
     return day.ending_balance * day.account.balance_sign < 0
 
 
-def check_all(book):
+def check_all(book, names=()):
     for check in CHECKS:
+        if len(names)>0 and check['name'] not in names:
+            continue
         for obj in _CHECK_ALL_SWITCH[check['per']](book, check):
             yield {'object': obj, 'check': check}
 
