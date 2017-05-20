@@ -18,8 +18,7 @@ def get_user_balance(book, accounts):
         except KeyError:
             accounts_to_remove.add(account)
             continue
-        for mut in ac.mutations:
-            trs.add(mut.transaction)
+        trs.update(ac.get_deep_trs())
     accounts -= accounts_to_remove
 
     trs = list(trs)
