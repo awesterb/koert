@@ -11,15 +11,24 @@ def get_user_balance(book, accounts):
     trs = set([])
     accounts = set(accounts)
     accounts_to_remove = set()
+    accounts_to_add = set()
 
+    # add the children and remove the non-existent accounts
     for account in accounts:
         try:
             ac = book.ac_by_path(account)
         except KeyError:
             accounts_to_remove.add(account)
             continue
-        trs.update(ac.get_deep_trs())
+        for d in ac.get_descendants():
+            accounts_to_add.add(d.path)
     accounts -= accounts_to_remove
+    accounts |= accounts_to_add
+
+    for account in accounts:
+        ac = book.ac_by_path(account)
+        for mut in ac.mutations:
+            trs.add(mut.transaction)
 
     trs = list(trs)
 
