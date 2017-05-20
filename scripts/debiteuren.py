@@ -26,9 +26,7 @@ def main():
 
     if args.name is not None:
         print(get_user_balance(book,
-                               [args.creditors_account + ":" + args.name,
-                                args.debitors_account
-                                + ":" + args.name]))
+                               [ac + ":" + args.name for ac in args.accounts ]))
     else:
         for name, value in get_debitors(book, args.accounts, day=args.date, onlypositive=(not args.alsonegative)):
             print("%30s %10s" % (name, value))
