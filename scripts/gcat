@@ -99,7 +99,7 @@ def bal(book, args):
         opb = get_balance_at(book, args.date)
     acs = get_relevant_children(book.ac_by_path(args.account))
     for ac in acs:
-        print("%58s %10s %10s" % (ac.shortpath, opb[ac][0], opb[ac][1]))
+        print("%100s %10s + %10s = %10s" % (ac.path, opb[ac][0], opb[ac][1], opb[ac][0]+opb[ac][1]))
 
 
 def lsac(book, args):
