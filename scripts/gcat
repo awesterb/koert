@@ -85,7 +85,7 @@ def get_relevant_children(ac):
     todo = [ac]
     while(len(todo) > 0):
         ac = todo.pop()
-        if len(ac.children) <= 10:
+        if len(ac.children) <= 15:
             todo.extend(list(ac.children.values()))
         yield ac
 
@@ -99,7 +99,18 @@ def bal(book, args):
         opb = get_balance_at(book, args.date)
     acs = get_relevant_children(book.ac_by_path(args.account))
     for ac in acs:
-        print("%100s %10s + %10s = %10s" % (ac.path, opb[ac][0], opb[ac][1], opb[ac][0]+opb[ac][1]))
+        pieces = ac.path.split(":")
+        lines = []
+        line = ""
+        for piece in pieces:
+            if len(line)+len(piece) < 40:
+                line += ":"+piece
+            else:
+                lines.append(line)
+                line = ":"+piece
+        for preline in lines:
+            print(preline)
+        print("%40s %10s + %10s = %10s" % (line, opb[ac][0], opb[ac][1], opb[ac][0]+opb[ac][1]))
 
 
 def lsac(book, args):
